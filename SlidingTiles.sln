@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlidingTileSolver", "SlidingTileSolver\SlidingTileSolver.csproj", "{9E8B0463-0668-4C8B-B1BC-3A05134E1A2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlidingTilesTests", "SlidingTilesTests\SlidingTilesTests.csproj", "{08EF0077-44CC-4E73-AB35-68F88398030C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9E8B0463-0668-4C8B-B1BC-3A05134E1A2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E8B0463-0668-4C8B-B1BC-3A05134E1A2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E8B0463-0668-4C8B-B1BC-3A05134E1A2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E8B0463-0668-4C8B-B1BC-3A05134E1A2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08EF0077-44CC-4E73-AB35-68F88398030C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08EF0077-44CC-4E73-AB35-68F88398030C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08EF0077-44CC-4E73-AB35-68F88398030C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08EF0077-44CC-4E73-AB35-68F88398030C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A8C778C-3B52-40D1-854D-011F007ABA24}
+	EndGlobalSection
+EndGlobal
