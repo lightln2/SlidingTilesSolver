@@ -131,9 +131,9 @@ public class FrontierStates
             ulong* statesPtrUlong = (ulong*)statesPtr;
             for (long i = 0; i < States.Length / 8; i++)
             {
-                long baseIndex = (i << 8);
                 ulong val = statesPtrUlong[i];
                 if (val == 0) continue;
+                long baseIndex = (i << 8);
                 byte* valPtr = (byte*)&val;
                 for (int j = 0; j < 8; j++)
                 {
