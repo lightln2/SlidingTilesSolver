@@ -70,13 +70,13 @@ public class PuzzleSolver
 
             GpuSolver.CalcGPU(upPos, true, upBuffer);
             GpuSolver.CalcGPU(dnPos, false, dnBuffer);
-            upPos = 0;
-            dnPos = 0;
 
             S3 += sw.Elapsed;
 
             states.AddUp(upBuffer, upPos);
             states.AddDown(dnBuffer, dnPos);
+            upPos = 0;
+            dnPos = 0;
 
             S4 += sw.Elapsed;
 
