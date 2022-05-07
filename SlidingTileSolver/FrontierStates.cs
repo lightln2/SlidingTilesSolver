@@ -10,6 +10,9 @@ public class FrontierStates
     private byte[] States;
 
     private byte[] Bounds;
+    private byte[] CollectCounts;
+    private byte[] CollectMap1;
+    private byte[] CollectMap2;
 
     public FrontierStates(PuzzleInfo info)
     {
@@ -25,6 +28,46 @@ public class FrontierStates
             if (!info.CanGoRight(i)) s |= PuzzleInfo.STATE_RT;
             Bounds[i] = s;
         }
+
+        CollectCounts = new byte[256];
+        CollectMap1 = new byte[8 * 256];
+        CollectMap2 = new byte[8 * 256];
+
+        for (int s = 0; s < 256; s++)
+        {
+            byte s1 = (byte)(s & 15);
+            byte s2 = (byte)((s >> 4) & 15);
+            byte count = 0;
+            if (s1 != 0) count++;
+            if (s2 != 0) count++;
+            CollectCounts[s] = count;
+        }
+
+        for (int j = 0; j < 8; j++)
+        {
+            for (int s = 0; s < 256; s++)
+            {
+                byte s1 = (byte)(s & 15);
+                byte s2 = (byte)((s >> 4) & 15);
+                if (s1 != 0)
+                {
+                    s1 |= Bounds[(2 * j) & 15];
+                    if (s1 != 15)
+                    {
+                        CollectMap1[(j << 8) + s] = (byte)(((2 * j) << 4) | (byte)(~s1 & 0xF));
+                    }
+                }
+                if (s2 != 0)
+                {
+                    s2 |= Bounds[(2 * j + 1) & 15];
+                    if (s2 != 15)
+                    {
+                        CollectMap2[(j << 8) + s] = (byte)(((2 * j + 1) << 4) | (byte)(~s2 & 0xF));
+                    }
+                }
+            }
+        }
+
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -88,6 +131,7 @@ public class FrontierStates
             ulong* statesPtrUlong = (ulong*)statesPtr;
             for (long i = 0; i < States.Length / 8; i++)
             {
+                long baseIndex = (i << 8);
                 ulong val = statesPtrUlong[i];
                 if (val == 0) continue;
                 byte* valPtr = (byte*)&val;
@@ -95,27 +139,17 @@ public class FrontierStates
                 {
                     byte s = valPtr[j];
                     if (s == 0) continue;
-                    byte s1 = (byte)(s & 15);
-                    byte s2 = (byte)((s >> 4) & 15);
-                    if (s1 != 0) 
-                    {
-                        count++;
-                        s1 |= Bounds[(i * 16 + 2 * j) & 15];
-                        if (s1 == 15) continue;
-                        list.Add(((i * 16 + 2 * j) * 16) | (byte)(~s1 & 0xF));
-                    }
-                    if (s2 != 0)
-                    {
-                        count++;
-                        s2 |= Bounds[(i * 16 + 2 * j + 1) & 15];
-                        if (s2 == 15) continue;
-                        list.Add(((i * 16 + 2 * j + 1) * 16) | (byte)(~s2 & 0xF));
-                    }
+                    count += CollectCounts[s];
+                    int mapIndex = (j << 8) | s;
+                    byte b1 = CollectMap1[mapIndex];
+                    byte b2 = CollectMap2[mapIndex];
+                    if (b1 != 0) list.Add(baseIndex | b1);
+                    if (b2 != 0) list.Add(baseIndex | b2);
                 }
                 statesPtrUlong[i] = 0;
             }
         }
-        //Console.WriteLine(string.Join(" ", list.Take(100)));
+
         return count;
     }
 }
