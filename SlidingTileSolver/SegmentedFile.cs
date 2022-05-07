@@ -42,6 +42,8 @@ public class SegmentedFile : IDisposable
         }
     }
 
+    public int SegmentsCount => Segments.Length;
+
     public void Clear()
     {
         for (int i = 0; i < Segments.Length; i++)

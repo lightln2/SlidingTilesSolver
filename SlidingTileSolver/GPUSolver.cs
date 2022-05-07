@@ -30,12 +30,12 @@ public unsafe class GpuSolver
 
     private static Context context;
     private static Accelerator accelerator;
-    private static Action<Index1D, PuzzleParams, ArrayView<long>, ArrayView<long>> life_kernel;
-    private static MemoryBuffer1D<long, Stride1D.Dense> dev_in;
-    private static MemoryBuffer1D<long, Stride1D.Dense> dev_out;
+    private static Action<Index1D, PuzzleParams, ArrayView<long>> life_kernel_up;
+    private static Action<Index1D, PuzzleParams, ArrayView<long>> life_kernel_dn;
+    private static MemoryBuffer1D<long, Stride1D.Dense> dev;
 
     public static int ProcessedValues = 0;
-    public static TimeSpan GpuExec = TimeSpan.Zero;
+    public static TimeSpan GpuExecTime = TimeSpan.Zero;
 
     static GpuSolver()
     {
@@ -53,15 +53,20 @@ public unsafe class GpuSolver
         pparams = new PuzzleParams(width, height);
     }
 
-    static void LifeKernel(
+    static void LifeKernelUp(
         Index1D index,
         PuzzleParams p,
-        ArrayView<long> input, ArrayView<long> output)
+        ArrayView<long> input)
     {
-        long upIndex, dnIndex;
-        VerticalMoves(ref p, input[index], out upIndex, out dnIndex);
-        output[index * 2] = upIndex;
-        output[index * 2 + 1] = dnIndex;
+        input[index] = VerticalMoves(ref p, input[index], 1);
+    }
+
+    static void LifeKernelDn(
+        Index1D index,
+        PuzzleParams p,
+        ArrayView<long> input)
+    {
+        input[index] = VerticalMoves(ref p, input[index], 0);
     }
 
     public static void CompileKernel()
@@ -77,25 +82,29 @@ public unsafe class GpuSolver
         }
 
         accelerator = context.CreateCudaAccelerator(0);
-        life_kernel = accelerator.LoadAutoGroupedStreamKernel<
+        life_kernel_up = accelerator.LoadAutoGroupedStreamKernel<
             Index1D,
             PuzzleParams,
-            ArrayView<long>, ArrayView<long>>(LifeKernel);
+            ArrayView<long>>(LifeKernelUp);
+        life_kernel_dn = accelerator.LoadAutoGroupedStreamKernel<
+            Index1D,
+            PuzzleParams,
+            ArrayView<long>>(LifeKernelDn);
 
-        dev_in = accelerator.Allocate1D<long>(GPUSIZE);
-        dev_out = accelerator.Allocate1D<long>(GPUSIZE * 2);
-
+        dev = accelerator.Allocate1D<long>(GPUSIZE);
     }
 
     public static void Dispose()
     {
-        dev_in.Dispose();
-        dev_out.Dispose();
+        dev.Dispose();
         accelerator.Dispose();
         context.Dispose();
-        Console.WriteLine($"Gpu cycles: {ProcessedValues}, total time: {GpuExec}");
     }
 
+    public static void PrintStats()
+    {
+        Console.WriteLine($"GPUSolver: Items={ProcessedValues}, time={GpuExecTime}");
+    }
 
     private static void Copy(byte[] src, byte[] dst)
     {
@@ -209,47 +218,42 @@ public unsafe class GpuSolver
         arr[OFFSET_ZERO] += (byte)p.Width;
     }
 
-    public static void VerticalMoves(ref PuzzleParams p, long index, out long upIndex, out long dnIndex)
+    public static long VerticalMoves(ref PuzzleParams p, long index, int isUp)
     {
         byte[] arr = new byte[16];
-        byte[] arr2 = new byte[16];
         FromIndex(ref p, index, arr);
         Unpack(ref p, arr);
 
-        if (CanRotateUp(ref p, arr))
+        if (isUp == 1)
         {
-            Copy(arr, arr2);
-            RotateUp(ref p, arr2);
-            Pack(ref p, arr2);
-            upIndex = GetIndex(ref p, arr2);
+            if (!CanRotateUp(ref p, arr)) return -1;
+            RotateUp(ref p, arr);
         }
         else
         {
-            upIndex = -1;
+            if (!CanRotateDn(ref p, arr)) return -1;
+            RotateDn(ref p, arr);
         }
-
-        if (CanRotateDn(ref p, arr))
-        {
-            Copy(arr, arr2);
-            RotateDn(ref p, arr2);
-            Pack(ref p, arr2);
-            dnIndex = GetIndex(ref p, arr2);
-        }
-        else
-        {
-            dnIndex = -1;
-        }
+        Pack(ref p, arr);
+        return GetIndex(ref p, arr);
     }
 
-    public static void CalcGPU(int count, long[] inIndexes, long[] outIndexes)
+    public static void CalcGPU(int count, bool isUp, long[] indexes)
     {
-        ProcessedValues++;
+        ProcessedValues += count;
         var sw = Stopwatch.StartNew();
-        dev_in.AsContiguous().CopyFromCPU(ref inIndexes[0], count);
-        life_kernel(count, pparams, dev_in.View, dev_out.View);
+        dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+        if (isUp)
+        {
+            life_kernel_up(count, pparams, dev.View);
+        }
+        else
+        {
+            life_kernel_dn(count, pparams, dev.View);
+        }
         accelerator.Synchronize();
-        dev_out.AsContiguous().CopyToCPU(ref outIndexes[0], count * 2);
-        GpuExec += sw.Elapsed;
+        dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+        GpuExecTime += sw.Elapsed;
         return;
     }
 

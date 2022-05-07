@@ -9,42 +9,84 @@ using System.Threading.Tasks;
 public class GPUSolverTests
 {
     [TestMethod]
-    public void Test_4x3()
+    public void Test_Up()
     {
-        var inp = new long[] {
-                1, 10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000
-            };
+        var str = "4 5 6 7 8 9 10 11";
+        var arr = Array.ConvertAll(str.Split(' '), long.Parse);
         GpuSolver.Initialize(4, 3);
-        var outp = new long[1000];
-        GpuSolver.CalcGPU(inp.Length, inp, outp);
-        var result = string.Join(" ", outp.Take(inp.Length * 2));
-        Assert.AreEqual("-1 533 244823046 -1 47520 380264 6336996 -1 -1 73572 -1 44484 -1 906388 -1 9930436 -1 100001140", result);
+        GpuSolver.CalcGPU(arr.Length, true, arr);
+        var result = string.Join(" ", arr);
+        Assert.AreEqual("1952 17777 144322 1029603 6336004 32820485 244823046 239500807", result);
+        GpuSolver.CalcGPU(arr.Length, false, arr);
+        result = string.Join(" ", arr);
+        Assert.AreEqual(str, result);
     }
 
     [TestMethod]
-    public void Test_4x3_perf()
+    public void Test_Dn()
     {
-        var inp = Enumerable.Range(0, 10_000_000).Select(i => (long)i).ToArray();
+        var str = "0 1 2 3 4 5 6 7";
+        var arr = Array.ConvertAll(str.Split(' '), long.Parse);
         GpuSolver.Initialize(4, 3);
-        var outp = new long[inp.Length * 2];
-        GpuSolver.CalcGPU(inp.Length, inp, outp);
-        var hash = outp.Sum();
-        Assert.AreEqual(526310943196224, hash);
+        GpuSolver.CalcGPU(arr.Length, false, arr);
+        var result = string.Join(" ", arr);
+        Assert.AreEqual("52 533 5286 47527 380168 2661129 15966730 79833611", result);
+        GpuSolver.CalcGPU(arr.Length, true, arr);
+        result = string.Join(" ", arr);
+        Assert.AreEqual(str, result);
+    }
+
+
+    [TestMethod]
+    public void Test_4x3()
+    {
+        var str = "21 165 1605 16005 160005 1600005 16000005 160000005";
+        var arr = Array.ConvertAll(str.Split(' '), long.Parse);
+        GpuSolver.Initialize(4, 3);
+        GpuSolver.CalcGPU(arr.Length, true, arr);
+        var result = string.Join(" ", arr);
+        Assert.AreEqual("17793 17937 760337 19697 779697 992977 16730577 159725617", result);
+        GpuSolver.CalcGPU(arr.Length, false, arr);
+        result = string.Join(" ", arr);
+        Assert.AreEqual(str, result);
     }
 
     [TestMethod]
     public void Test_4x4()
     {
-        var inp = new long[] {
-                1, 10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000,
-                1_000_000_000, 10_000_000_000, 100_000_000_000, 1_000_000_000_000, 10_000_000_000_000
-            };
+        var str = "21 165 1605 16005 160005 1600005 16000005 160000005 1600000005 16000000005 160000000005 1600000000005";
+        var arr = Array.ConvertAll(str.Split(' '), long.Parse);
         GpuSolver.Initialize(4, 4);
-        var outp = new long[1000];
-        GpuSolver.CalcGPU(inp.Length, inp, outp);
-        var result = string.Join(" ", outp.Take(inp.Length * 2));
-        Assert.AreEqual("-1 725 4727923206 697426329614 131040 1572584 63948516 12454042604 -1 86164 -1 119796 -1 990436 -1 10445044 -1 99804660 -1 999968820 -1 10000292900 -1 99999932500 -1 1000000248788 -1 10000000445044", result);
+        GpuSolver.CalcGPU(arr.Length, true, arr);
+        var result = string.Join(" ", arr);
+        Assert.AreEqual("47297 47441 1572641 3670241 3157361 701201 16619441 156082481 1600022081 16003654241 160002997361 1599999101201", result);
+        foreach (long l in arr) Assert.IsTrue(l % 16 == 1);
+        GpuSolver.CalcGPU(arr.Length, false, arr);
+        result = string.Join(" ", arr);
+        Assert.AreEqual(str, result);
     }
 
+    [TestMethod]
+    public void Test_4x4_Perf()
+    {
+        var arr = new long[GpuSolver.GPUSIZE];
+        for (long i = 0; i < arr.Length; i++)
+        {
+            arr[i] = i * 16 + 5;
+        }
+        GpuSolver.Initialize(4, 4);
+        GpuSolver.CalcGPU(arr.Length, true, arr);
+        Assert.AreEqual("47281 47297 47313 47329 47345 47361 47377 47393 47409 47425 47441 47457", string.Join(" ", arr.Take(12)));
+        foreach (long l in arr) Assert.IsTrue(l % 16 == 1);
+        GpuSolver.CalcGPU(arr.Length, false, arr);
+        for (long i = 0; i < arr.Length; i++)
+        {
+            if (arr[i] != i * 16 + 5)
+            {
+                Assert.Fail($"at {i}: arr[i]={arr[i]}; i * 16 + 5 = {i * 16 + 5}");
+            }
+        }
+        GpuSolver.PrintStats();
+    }
 
 }
