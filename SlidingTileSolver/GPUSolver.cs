@@ -240,6 +240,7 @@ public unsafe class GpuSolver
 
     public static void CalcGPU(int count, bool isUp, long[] indexes)
     {
+        if (count == 0) return;
         ProcessedValues += count;
         var sw = Stopwatch.StartNew();
         dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
