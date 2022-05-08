@@ -101,6 +101,17 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void AddLeftRight(long segmentBase, uint[] buffer, int len)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            long val = segmentBase | buffer[i];
+            StatesMap[val >> (STATES_MAP_POW + 4)] = 1;
+            States[val >> 8] |= LeftRightMap[val & 255];
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AddUp(long[] buffer, int count)
     {
         for (int i = 0; i < count; i++)
@@ -164,4 +175,78 @@ public class FrontierStates
 
         return count;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe long Collect(SegmentedFile frontier, uint[] buffer)
+    {
+        int bufferPos = 0;
+        long currentSegment = 0;
+
+        long count = 0;
+        fixed (ulong* statesPtr = States)
+        {
+            for (long q = 0; q < StatesMap.Length; q++)
+            {
+                if (StatesMap[q] == 0) continue;
+                StatesMap[q] = 0;
+                long start = q << (STATES_MAP_POW - 4);
+                long end = Math.Min(States.Length, (q + 1) << (STATES_MAP_POW - 4));
+                long nextSegment = (start << 8) >> 32;
+                if (nextSegment != currentSegment)
+                {
+                    frontier.WriteSegment((int)currentSegment, buffer, 0, bufferPos);
+                    bufferPos = 0;
+                    currentSegment = nextSegment;
+                }
+                for (long i = start; i < end; i++)
+                {
+                    ulong val = statesPtr[i];
+                    if (val == 0) continue;
+                    long baseIndex = (i << 8);
+
+                    while (val != 0)
+                    {
+                        int bit = BitOperations.TrailingZeroCount(val);
+                        int j = (bit >> 3);
+                        int byteIndex = (j << 3);
+                        byte s = (byte)(val >> byteIndex);
+                        count += CollectCounts[s];
+                        int mapIndex = (j << 8) | s;
+                        byte b1 = CollectMap1[mapIndex];
+                        byte b2 = CollectMap2[mapIndex];
+                        if (b1 != 0)
+                        {
+                            buffer[bufferPos++] = (uint)(baseIndex | b1);
+                            if (bufferPos == buffer.Length)
+                            {
+                                frontier.WriteSegment((int)currentSegment, buffer, 0, bufferPos);
+                                bufferPos = 0;
+                            }
+                        }
+                        if (b2 != 0)
+                        {
+                            buffer[bufferPos++] = (uint)(baseIndex | b2);
+                            if (bufferPos == buffer.Length)
+                            {
+                                frontier.WriteSegment((int)currentSegment, buffer, 0, bufferPos);
+                                bufferPos = 0;
+                            }
+                        }
+
+                        val &= ~(0xFFUL << byteIndex);
+                    }
+                    statesPtr[i] = 0;
+                }
+            }
+            if (bufferPos > 0)
+            {
+                frontier.WriteSegment((int)currentSegment, buffer, 0, bufferPos);
+                bufferPos = 0;
+            }
+
+        }
+
+        return count;
+    }
+
 }

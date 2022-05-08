@@ -18,26 +18,21 @@ public class PuzzleSolver
         Console.WriteLine(info);
         var results = new List<long>();
 
-        /*
-        using var frontier = new SegmentedFile("d:/PUZ/frontier.1", info.SegmentsCount * 16);
-        using var newFrontier = new SegmentedFile("d:/PUZ/frontier.2", info.SegmentsCount * 16);
-        using var semiFrontier = new SegmentedFile("c:/PUZ/semifrontier", info.SegmentsCount * 2);
-
+        var frontier = new SegmentedFile("d:/PUZ/frontier.1", info.SegmentsCount * 16);
+        var newFrontier = new SegmentedFile("d:/PUZ/frontier.2", info.SegmentsCount * 16);
         uint[] buffer = new uint[4 * 1024 * 1024];
-
-        // 1. Fill initial state
-
+        // Fill initial state
         buffer[0] = (uint)((info.InitialIndex << 4) | info.GetState(initialIndex));
         frontier.WriteSegment(0, buffer, 0, 1);
+
+        /*
+        using var semiFrontier = new SegmentedFile("c:/PUZ/semifrontier", info.SegmentsCount * 2);
         */
 
         var upBuffer = new long[GpuSolver.GPUSIZE];
         int upPos = 0;
         var dnBuffer = new long[GpuSolver.GPUSIZE];
         int dnPos = 0;
-
-        var list = new List<long>();
-        list.Add((info.InitialIndex << 4) | info.GetState(initialIndex));
 
         var states = new FrontierStates(info);
 
@@ -54,17 +49,40 @@ public class PuzzleSolver
         {
             var sw = Stopwatch.StartNew();
 
-            // 1. states
-            foreach (long val in list)
+            // Fill semi-frontier
+            for (int s = 0; s < frontier.SegmentsCount; s++)
             {
-                if ((val & PuzzleInfo.STATE_UP) != 0) upBuffer[upPos++] = val >> 4;
-                if ((val & PuzzleInfo.STATE_DN) != 0) dnBuffer[dnPos++] = val >> 4;
+                long segmentBase = (long)s << 32;
+                for (int p = 0; p < frontier.SegmentParts(s); p++)
+                {
+                    int len = frontier.ReadSegment(s, p, buffer);
+                    for (int i = 0; i < len; i++)
+                    {
+                        long val = segmentBase | buffer[i];
+                        if ((val & PuzzleInfo.STATE_UP) != 0)
+                        {
+                            upBuffer[upPos++] = val >> 4;
+                        }
+                        if ((val & PuzzleInfo.STATE_DN) != 0)
+                        {
+                            dnBuffer[dnPos++] = val >> 4;
+                        }
+                    }
+                }
             }
 
             S1 += sw.Elapsed;
 
-            // 2. left / right
-            states.AddLeftRight(list);
+            // left / right
+            for (int s = 0; s < frontier.SegmentsCount; s++)
+            {
+                long segmentBase = (long)s << 32;
+                for (int p = 0; p < frontier.SegmentParts(s); p++)
+                {
+                    int len = frontier.ReadSegment(s, p, buffer);
+                    states.AddLeftRight(segmentBase, buffer, len);
+                }
+            }
 
             S2 += sw.Elapsed;
 
@@ -80,14 +98,17 @@ public class PuzzleSolver
 
             S4 += sw.Elapsed;
 
-            list.Clear();
-            long count = states.Collect(list);
+            long count = states.Collect(newFrontier, buffer);
+            var tmp = frontier;
+            frontier = newFrontier;
+            newFrontier = tmp;
+            newFrontier.Clear();
 
             S6 += sw.Elapsed;
 
             if (count == 0) break;
             results.Add(count);
-            Console.WriteLine($"Step: {step}; states: {count} (n-t: {list.Count}) time: {sw.Elapsed}");
+            Console.WriteLine($"Step: {step}; states: {count} time: {sw.Elapsed}");
         }
         Console.WriteLine($"Total time: {totalTime.Elapsed}");
         GpuSolver.PrintStats();
@@ -96,6 +117,8 @@ public class PuzzleSolver
         Console.WriteLine($"S3={S3}");
         Console.WriteLine($"S4={S4}");
         Console.WriteLine($"S6={S6}");
+        frontier.Dispose();
+        newFrontier.Dispose();
         return results.ToArray();
     }
 }
