@@ -12,6 +12,8 @@ public class FrontierStates
     private byte[] StatesMap;
     private byte[] States;
 
+    private ulong[] LeftRightMap;
+
     private byte[] Bounds;
     private byte[] CollectCounts;
     private byte[] CollectMap1;
@@ -31,6 +33,18 @@ public class FrontierStates
             if (!info.CanGoLeft(i)) s |= PuzzleInfo.STATE_LT;
             if (!info.CanGoRight(i)) s |= PuzzleInfo.STATE_RT;
             Bounds[i] = s;
+        }
+
+        LeftRightMap = new ulong[256];
+
+        for (int b = 0; b < 256; b++)
+        {
+            ulong x = 0;
+            int index = b >> 4;
+            int state = b & 15;
+            if ((state & PuzzleInfo.STATE_LT) != 0) x |= (ulong)(PuzzleInfo.STATE_RT) << ((index - 1) * 4);
+            if ((state & PuzzleInfo.STATE_RT) != 0) x |= (ulong)(PuzzleInfo.STATE_LT) << ((index + 1) * 4);
+            LeftRightMap[b] = x;
         }
 
         CollectCounts = new byte[256];
@@ -75,58 +89,48 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddLeftRight(List<long> list)
+    public unsafe void AddLeftRight(List<long> list)
     {
-        for (int i = 0; i < list.Count; i++)
+        fixed (byte* ptr = States)
         {
-            long val = list[i];
-            long index = val >> 4;
-            StatesMap[index >> STATES_MAP_POW] = 1;
-            if (index % 2 == 0)
+            ulong* ulongPtr = (ulong*)ptr;
+            for (int i = 0; i < list.Count; i++)
             {
-                if ((val & PuzzleInfo.STATE_LT) != 0) States[index / 2 - 1] |= (PuzzleInfo.STATE_RT << 4);
-                if ((val & PuzzleInfo.STATE_RT) != 0) States[index / 2] |= (PuzzleInfo.STATE_LT << 4);
-            }
-            else
-            {
-                if ((val & PuzzleInfo.STATE_LT) != 0) States[index / 2] |= PuzzleInfo.STATE_RT;
-                if ((val & PuzzleInfo.STATE_RT) != 0) States[index / 2 + 1] |= PuzzleInfo.STATE_LT;
+                long val = list[i];
+                StatesMap[val >> (STATES_MAP_POW + 4)] = 1;
+                ulongPtr[val >> 8] |= LeftRightMap[val & 255];
             }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddUp(long[] buffer, int count)
+    public unsafe void AddUp(long[] buffer, int count)
     {
-        for (int i = 0; i < count; i++)
+        fixed (byte* ptr = States)
         {
-            StatesMap[buffer[i] >> STATES_MAP_POW] = 1;
-
-            if (buffer[i] % 2 == 0)
+            ulong* ulongPtr = (ulong*)ptr;
+            for (int i = 0; i < count; i++)
             {
-                States[buffer[i] / 2] |= PuzzleInfo.STATE_DN;
-            }
-            else
-            {
-                States[buffer[i] / 2] |= (PuzzleInfo.STATE_DN << 4);
+                long val = buffer[i];
+                int offset = (int)((val & 15) * 4);
+                StatesMap[val >> STATES_MAP_POW] = 1;
+                ulongPtr[val >> 4] |= (ulong)PuzzleInfo.STATE_DN << offset;
             }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddDown(long[] buffer, int count)
+    public unsafe void AddDown(long[] buffer, int count)
     {
-        for (int i = 0; i < count; i++)
+        fixed (byte* ptr = States)
         {
-            StatesMap[buffer[i] >> STATES_MAP_POW] = 1;
-
-            if (buffer[i] % 2 == 0)
+            ulong* ulongPtr = (ulong*)ptr;
+            for (int i = 0; i < count; i++)
             {
-                States[buffer[i] / 2] |= PuzzleInfo.STATE_UP;
-            }
-            else
-            {
-                States[buffer[i] / 2] |= (PuzzleInfo.STATE_UP << 4);
+                long val = buffer[i];
+                int offset = (int)((val & 15) * 4);
+                StatesMap[val >> STATES_MAP_POW] = 1;
+                ulongPtr[val >> 4] |= (ulong)PuzzleInfo.STATE_UP << offset;
             }
         }
     }
@@ -155,7 +159,6 @@ public class FrontierStates
                         int bit = BitOperations.TrailingZeroCount(val);
                         int j = (bit >> 3);
                         int byteIndex = (j << 3);
-                        if (j >= 8) throw new Exception("A");
                         byte s = (byte)(val >> byteIndex);
                         count += CollectCounts[s];
                         int mapIndex = (j << 8) | s;
