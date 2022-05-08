@@ -10,7 +10,7 @@ public class FrontierStates
 {
     const int STATES_MAP_POW = 12;
     private byte[] StatesMap;
-    private byte[] States;
+    private ulong[] States;
 
     private ulong[] LeftRightMap;
 
@@ -21,8 +21,8 @@ public class FrontierStates
 
     public FrontierStates(PuzzleInfo info)
     {
-        States = new byte[info.Total / 2];
-        StatesMap = new byte[(States.Length >> (STATES_MAP_POW - 1)) + 1];
+        States = new ulong[info.Total / 16];
+        StatesMap = new byte[(States.Length >> (STATES_MAP_POW - 4)) + 1];
 
         Bounds = new byte[16];
         for (int i = 0; i < 16; i++)
@@ -89,49 +89,37 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe void AddLeftRight(List<long> list)
+    public void AddLeftRight(List<long> list)
     {
-        fixed (byte* ptr = States)
+        for (int i = 0; i < list.Count; i++)
         {
-            ulong* ulongPtr = (ulong*)ptr;
-            for (int i = 0; i < list.Count; i++)
-            {
-                long val = list[i];
-                StatesMap[val >> (STATES_MAP_POW + 4)] = 1;
-                ulongPtr[val >> 8] |= LeftRightMap[val & 255];
-            }
+            long val = list[i];
+            StatesMap[val >> (STATES_MAP_POW + 4)] = 1;
+            States[val >> 8] |= LeftRightMap[val & 255];
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe void AddUp(long[] buffer, int count)
+    public void AddUp(long[] buffer, int count)
     {
-        fixed (byte* ptr = States)
+        for (int i = 0; i < count; i++)
         {
-            ulong* ulongPtr = (ulong*)ptr;
-            for (int i = 0; i < count; i++)
-            {
-                long val = buffer[i];
-                int offset = (int)((val & 15) * 4);
-                StatesMap[val >> STATES_MAP_POW] = 1;
-                ulongPtr[val >> 4] |= (ulong)PuzzleInfo.STATE_DN << offset;
-            }
+            long val = buffer[i];
+            int offset = (int)((val & 15) << 2);
+            StatesMap[val >> STATES_MAP_POW] = 1;
+            States[val >> 4] |= (ulong)PuzzleInfo.STATE_DN << offset;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe void AddDown(long[] buffer, int count)
+    public void AddDown(long[] buffer, int count)
     {
-        fixed (byte* ptr = States)
+        for (int i = 0; i < count; i++)
         {
-            ulong* ulongPtr = (ulong*)ptr;
-            for (int i = 0; i < count; i++)
-            {
-                long val = buffer[i];
-                int offset = (int)((val & 15) * 4);
-                StatesMap[val >> STATES_MAP_POW] = 1;
-                ulongPtr[val >> 4] |= (ulong)PuzzleInfo.STATE_UP << offset;
-            }
+            long val = buffer[i];
+            int offset = (int)((val & 15) << 2);
+            StatesMap[val >> STATES_MAP_POW] = 1;
+            States[val >> 4] |= (ulong)PuzzleInfo.STATE_UP << offset;
         }
     }
 
@@ -139,18 +127,17 @@ public class FrontierStates
     public unsafe long Collect(List<long> list)
     {
         long count = 0;
-        fixed (byte* statesPtr = States)
+        fixed (ulong* statesPtr = States)
         {
-            ulong* statesPtrUlong = (ulong*)statesPtr;
             for (long q = 0; q < StatesMap.Length; q++)
             {
                 if (StatesMap[q] == 0) continue;
                 StatesMap[q] = 0;
                 long start = q << (STATES_MAP_POW - 4);
-                long end = Math.Min(States.Length / 8, (q + 1) << (STATES_MAP_POW - 4));
+                long end = Math.Min(States.Length, (q + 1) << (STATES_MAP_POW - 4));
                 for (long i = start; i < end; i++)
                 {
-                    ulong val = statesPtrUlong[i];
+                    ulong val = statesPtr[i];
                     if (val == 0) continue;
                     long baseIndex = (i << 8);
 
@@ -166,10 +153,10 @@ public class FrontierStates
                         byte b2 = CollectMap2[mapIndex];
                         if (b1 != 0) list.Add(baseIndex | b1);
                         if (b2 != 0) list.Add(baseIndex | b2);
-                        
+
                         val &= ~(0xFFUL << byteIndex);
                     }
-                    statesPtrUlong[i] = 0;
+                    statesPtr[i] = 0;
                 }
             }
         }
