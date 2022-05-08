@@ -87,7 +87,7 @@ public class PuzzleSolver
 
             if (count == 0) break;
             results.Add(count);
-            Console.WriteLine($"Step: {step}; states: {count} non-terminal: {list.Count} time: {sw.Elapsed}");
+            Console.WriteLine($"Step: {step}; states: {count} (n-t: {list.Count}) time: {sw.Elapsed}");
         }
         Console.WriteLine($"Total time: {totalTime.Elapsed}");
         GpuSolver.PrintStats();

@@ -22,6 +22,7 @@ public class FrontierStates
     public FrontierStates(PuzzleInfo info)
     {
         States = new ulong[info.Total / 16];
+        //States = new ulong[256L * 1024 * 1024];
         StatesMap = new byte[(States.Length >> (STATES_MAP_POW - 4)) + 1];
 
         Bounds = new byte[16];
