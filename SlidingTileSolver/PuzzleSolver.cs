@@ -40,7 +40,7 @@ public class PuzzleSolver
         TimeSpan S2 = TimeSpan.Zero;
         TimeSpan S3 = TimeSpan.Zero;
         TimeSpan S4 = TimeSpan.Zero;
-        TimeSpan S6 = TimeSpan.Zero;
+        TimeSpan S5 = TimeSpan.Zero;
 
         Console.WriteLine($"Step: {0}; states: {1}");
         results.Add(1);
@@ -104,7 +104,7 @@ public class PuzzleSolver
             newFrontier = tmp;
             newFrontier.Clear();
 
-            S6 += sw.Elapsed;
+            S5 += sw.Elapsed;
 
             if (count == 0) break;
             results.Add(count);
@@ -116,7 +116,7 @@ public class PuzzleSolver
         Console.WriteLine($"S2={S2}");
         Console.WriteLine($"S3={S3}");
         Console.WriteLine($"S4={S4}");
-        Console.WriteLine($"S6={S6}");
+        Console.WriteLine($"S5={S5}");
         frontier.Dispose();
         newFrontier.Dispose();
         return results.ToArray();
