@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 public class FrontierStates
 {
+    const int STATES_MAP_POW = 12;
+    private byte[] StatesMap;
     private byte[] States;
 
     private byte[] Bounds;
@@ -17,6 +20,7 @@ public class FrontierStates
     public FrontierStates(PuzzleInfo info)
     {
         States = new byte[info.Total / 2];
+        StatesMap = new byte[(States.Length >> (STATES_MAP_POW - 1)) + 1];
 
         Bounds = new byte[16];
         for (int i = 0; i < 16; i++)
@@ -77,6 +81,7 @@ public class FrontierStates
         {
             long val = list[i];
             long index = val >> 4;
+            StatesMap[index >> STATES_MAP_POW] = 1;
             if (index % 2 == 0)
             {
                 if ((val & PuzzleInfo.STATE_LT) != 0) States[index / 2 - 1] |= (PuzzleInfo.STATE_RT << 4);
@@ -95,6 +100,8 @@ public class FrontierStates
     {
         for (int i = 0; i < count; i++)
         {
+            StatesMap[buffer[i] >> STATES_MAP_POW] = 1;
+
             if (buffer[i] % 2 == 0)
             {
                 States[buffer[i] / 2] |= PuzzleInfo.STATE_DN;
@@ -111,6 +118,8 @@ public class FrontierStates
     {
         for (int i = 0; i < count; i++)
         {
+            StatesMap[buffer[i] >> STATES_MAP_POW] = 1;
+
             if (buffer[i] % 2 == 0)
             {
                 States[buffer[i] / 2] |= PuzzleInfo.STATE_UP;
@@ -129,24 +138,36 @@ public class FrontierStates
         fixed (byte* statesPtr = States)
         {
             ulong* statesPtrUlong = (ulong*)statesPtr;
-            for (long i = 0; i < States.Length / 8; i++)
+            for (long q = 0; q < StatesMap.Length; q++)
             {
-                ulong val = statesPtrUlong[i];
-                if (val == 0) continue;
-                long baseIndex = (i << 8);
-                byte* valPtr = (byte*)&val;
-                for (int j = 0; j < 8; j++)
+                if (StatesMap[q] == 0) continue;
+                StatesMap[q] = 0;
+                long start = q << (STATES_MAP_POW - 4);
+                long end = Math.Min(States.Length / 8, (q + 1) << (STATES_MAP_POW - 4));
+                for (long i = start; i < end; i++)
                 {
-                    byte s = valPtr[j];
-                    if (s == 0) continue;
-                    count += CollectCounts[s];
-                    int mapIndex = (j << 8) | s;
-                    byte b1 = CollectMap1[mapIndex];
-                    byte b2 = CollectMap2[mapIndex];
-                    if (b1 != 0) list.Add(baseIndex | b1);
-                    if (b2 != 0) list.Add(baseIndex | b2);
+                    ulong val = statesPtrUlong[i];
+                    if (val == 0) continue;
+                    long baseIndex = (i << 8);
+
+                    while (val != 0)
+                    {
+                        int bit = BitOperations.TrailingZeroCount(val);
+                        int j = (bit >> 3);
+                        int byteIndex = (j << 3);
+                        if (j >= 8) throw new Exception("A");
+                        byte s = (byte)(val >> byteIndex);
+                        count += CollectCounts[s];
+                        int mapIndex = (j << 8) | s;
+                        byte b1 = CollectMap1[mapIndex];
+                        byte b2 = CollectMap2[mapIndex];
+                        if (b1 != 0) list.Add(baseIndex | b1);
+                        if (b2 != 0) list.Add(baseIndex | b2);
+                        
+                        val &= ~(0xFFUL << byteIndex);
+                    }
+                    statesPtrUlong[i] = 0;
                 }
-                statesPtrUlong[i] = 0;
             }
         }
 
