@@ -18,23 +18,19 @@ public class PuzzleSolver
         Console.WriteLine(info);
         var results = new List<long>();
 
-        var frontier = new SegmentedFile("d:/PUZ/frontier.1", info.SegmentsCount * 16);
-        var newFrontier = new SegmentedFile("d:/PUZ/frontier.2", info.SegmentsCount * 16);
-        uint[] buffer = new uint[4 * 1024 * 1024];
+        var frontier = new Frontier("d:/PUZ/frontier.1", info);
+        var newFrontier = new Frontier("d:/PUZ/frontier.2", info);
+        long[] buffer = new long[PuzzleInfo.FRONTIER_BUFFER_SIZE];
+
         // Fill initial state
-        buffer[0] = (uint)((info.InitialIndex << 4) | info.GetState(initialIndex));
-        frontier.WriteSegment(0, buffer, 0, 1);
+        buffer[0] = (info.InitialIndex << 4) | info.GetState(initialIndex);
+        frontier.Write(0, buffer, 1);
 
-        /*
-        using var semiFrontier = new SegmentedFile("c:/PUZ/semifrontier", info.SegmentsCount * 2);
-        */
-
-        var upBuffer = new long[GpuSolver.GPUSIZE];
-        int upPos = 0;
-        var dnBuffer = new long[GpuSolver.GPUSIZE];
-        int dnPos = 0;
+        using var semiFrontier = new SegmentedFileLong("c:/PUZ/semifrontier", info.SegmentsCount * 2);
+        var semifrontierCollector = new SemifrontierCollector(semiFrontier, info);
 
         var states = new FrontierStates(info);
+        var upDownCollector = new UpDownCollector(semifrontierCollector);
 
         TimeSpan S1 = TimeSpan.Zero;
         TimeSpan S2 = TimeSpan.Zero;
@@ -49,66 +45,66 @@ public class PuzzleSolver
         {
             var sw = Stopwatch.StartNew();
 
+            semiFrontier.Clear();
+
             // Fill semi-frontier
-            for (int s = 0; s < frontier.SegmentsCount; s++)
+            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                long segmentBase = (long)s << 32;
                 for (int p = 0; p < frontier.SegmentParts(s); p++)
                 {
-                    int len = frontier.ReadSegment(s, p, buffer);
-                    for (int i = 0; i < len; i++)
-                    {
-                        long val = segmentBase | buffer[i];
-                        if ((val & PuzzleInfo.STATE_UP) != 0)
-                        {
-                            upBuffer[upPos++] = val >> 4;
-                        }
-                        if ((val & PuzzleInfo.STATE_DN) != 0)
-                        {
-                            dnBuffer[dnPos++] = val >> 4;
-                        }
-                    }
+                    int len = frontier.Read(s, p, buffer);
+                    upDownCollector.Collect(buffer, len);
                 }
             }
 
+            upDownCollector.Close();
+
             S1 += sw.Elapsed;
 
-            // left / right
-            for (int s = 0; s < frontier.SegmentsCount; s++)
+            // Fill new frontier
+
+            long count = 0;
+
+            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                long segmentBase = (long)s << 32;
+                states.SetSegment(s);
+                // up
+                for (int p = 0; p < semiFrontier.SegmentParts(2 * s); p++)
+                {
+                    int len = semiFrontier.ReadSegment(2 * s, p, buffer);
+                    states.AddUp(buffer, len);
+                }
+
+                // down
+                for (int p = 0; p < semiFrontier.SegmentParts(2 * s + 1); p++)
+                {
+                    int len = semiFrontier.ReadSegment(2 * s + 1, p, buffer);
+                    states.AddDown(buffer, len);
+                }
+
                 for (int p = 0; p < frontier.SegmentParts(s); p++)
                 {
-                    int len = frontier.ReadSegment(s, p, buffer);
-                    states.AddLeftRight(segmentBase, buffer, len);
+                    int len = frontier.Read(s, p, buffer);
+                    states.AddLeftRight(buffer, len);
                 }
+
+                var frontierCollector = new FrontierCollector(newFrontier, s);
+                count += states.Collect(frontierCollector);
             }
 
             S2 += sw.Elapsed;
 
-            GpuSolver.CalcGPU(upPos, true, upBuffer);
-            GpuSolver.CalcGPU(dnPos, false, dnBuffer);
-
-            S3 += sw.Elapsed;
-
-            states.AddUp(upBuffer, upPos);
-            states.AddDown(dnBuffer, dnPos);
-            upPos = 0;
-            dnPos = 0;
-
-            S4 += sw.Elapsed;
-
-            long count = states.Collect(newFrontier, buffer);
             var tmp = frontier;
             frontier = newFrontier;
             newFrontier = tmp;
             newFrontier.Clear();
+            semiFrontier.Clear();
 
             S5 += sw.Elapsed;
 
             if (count == 0) break;
             results.Add(count);
-            Console.WriteLine($"Step: {step}; states: {count} time: {sw.Elapsed}");
+            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed}");
         }
         Console.WriteLine($"Total time: {totalTime.Elapsed}");
         GpuSolver.PrintStats();

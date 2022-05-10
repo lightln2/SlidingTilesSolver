@@ -6,12 +6,19 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
+    public const int SEGMENT_SIZE_POW = 32;
+    public const long SEGMENT_MASK = (1L << SEGMENT_SIZE_POW) - 1;
+    public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
+    public const int SEMIFRONTIER_BUFFER_SIZE = 1024 * 1024 / 8;
+
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;
     // real number of states
     public readonly long RealStates;
     // problem size: each line of size 'Size' occupies 16 positions
     public readonly long Total;
+
+    public readonly long StatesMapLength;
 
     public readonly int SegmentsCount;
 
@@ -24,7 +31,8 @@ public class PuzzleInfo
         if (InitialIndex >= 16) throw new Exception("Initial index should be from 0 to 16");
         RealStates = Util.Factorial(Size) / 2;
         Total = Util.Factorial(Size - 1) * 16 / 2;
-        SegmentsCount = (int)((Total >> 32) + 1);
+        SegmentsCount = (int)((Total >> SEGMENT_SIZE_POW) + 1);
+        StatesMapLength = SegmentsCount == 1 ? Total : 1L << SEGMENT_SIZE_POW;
     }
 
     public override string ToString()
