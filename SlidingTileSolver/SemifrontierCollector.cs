@@ -7,83 +7,53 @@ using System.Threading.Tasks;
 
 public class SemifrontierCollector
 {
-    private SegmentedFileLong Semifrontier;
-    private List<long[]> UpBuffers = new List<long[]>();
-    private int[] UpCounts;
-    private List<long[]> DnBuffers = new List<long[]>();
-    private int[] DnCounts;
+    private SegmentedFile Semifrontier;
+    private List<uint[]> Buffers = new List<uint[]>();
+    private int[] Counts;
 
-    public SemifrontierCollector(SegmentedFileLong semifrontier, PuzzleInfo info)
+    public SemifrontierCollector(SegmentedFile semifrontier, PuzzleInfo info)
     {
         Semifrontier = semifrontier;
-        UpCounts = new int[info.SegmentsCount];
-        DnCounts = new int[info.SegmentsCount];
+        Counts = new int[info.SegmentsCount];
         for (int i = 0; i < info.SegmentsCount; i++)
         {
-            UpBuffers.Add(new long[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE]);
-            DnBuffers.Add(new long[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE]);
+            Buffers.Add(new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE]);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void CollectUp(long[] buffer, int len)
+    public void Collect(long[] buffer, int len)
     {
         for (int i = 0; i < len; i++)
         {
-            AddUp(buffer[i]);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void CollectDn(long[] buffer, int len)
-    {
-        for (int i = 0; i < len; i++)
-        {
-            AddDn(buffer[i]);
+            Add(buffer[i]);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void AddUp(long value)
+    private void Add(long value)
     {
         int segment = (int)(value >> PuzzleInfo.SEGMENT_SIZE_POW);
-        UpBuffers[segment][UpCounts[segment]++] = value;
-        if (UpCounts[segment] == UpBuffers[segment].Length)
+        Buffers[segment][Counts[segment]++] = (uint)(value & PuzzleInfo.SEGMENT_MASK);
+        if (Counts[segment] == Buffers[segment].Length)
         {
-            FlushUp(segment);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void AddDn(long value)
-    {
-        int segment = (int)(value >> PuzzleInfo.SEGMENT_SIZE_POW);
-        DnBuffers[segment][DnCounts[segment]++] = value;
-        if (DnCounts[segment] == DnBuffers[segment].Length)
-        {
-            FlushDn(segment);
+            Flush(segment);
         }
     }
 
     public void Close()
     {
-        for (int i = 0; i < UpBuffers.Count; i++)
+        for (int i = 0; i < Buffers.Count; i++)
         {
-            if (UpCounts[i] > 0) FlushUp(i);
-            if (DnCounts[i] > 0) FlushDn(i);
+            if (Counts[i] > 0) Flush(i);
         }
     }
 
-    private void FlushUp(int segment)
+    private void Flush(int segment)
     {
-        Semifrontier.WriteSegment(segment * 2, UpBuffers[segment], 0, UpCounts[segment]);
-        UpCounts[segment] = 0;
+        Semifrontier.WriteSegment(segment, Buffers[segment], 0, Counts[segment]);
+        Counts[segment] = 0;
     }
 
 
-    private void FlushDn(int segment)
-    {
-        Semifrontier.WriteSegment(segment * 2 + 1, DnBuffers[segment], 0, DnCounts[segment]);
-        DnCounts[segment] = 0;
-    }
 }

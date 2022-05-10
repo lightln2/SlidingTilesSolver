@@ -7,15 +7,17 @@ using System.Threading.Tasks;
 
 public class UpDownCollector
 {
-    public readonly SemifrontierCollector SemifrontierCollector;
+    public readonly SemifrontierCollector SemifrontierCollectorUp;
+    public readonly SemifrontierCollector SemifrontierCollectorDown;
     private readonly long[] UpBuffer = new long[GpuSolver.GPUSIZE];
     private int UpCount;
     private readonly long[] DnBuffer = new long[GpuSolver.GPUSIZE];
     private int DnCount;
 
-    public UpDownCollector(SemifrontierCollector semifrontierCollector)
+    public UpDownCollector(SemifrontierCollector semifrontierCollectorUp, SemifrontierCollector semifrontierCollectorDown)
     {
-        SemifrontierCollector = semifrontierCollector;
+        SemifrontierCollectorUp = semifrontierCollectorUp;
+        SemifrontierCollectorDown = semifrontierCollectorDown;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -57,15 +59,15 @@ public class UpDownCollector
 
     private void FlushUp()
     {
-        GpuSolver.CalcGPU(UpCount, true, UpBuffer);
-        SemifrontierCollector.CollectUp(UpBuffer, UpCount);
+        GpuSolver.CalcGPU_Up(UpCount, UpBuffer);
+        SemifrontierCollectorUp.Collect(UpBuffer, UpCount);
         UpCount = 0;
     }
 
     private void FlushDn()
     {
-        GpuSolver.CalcGPU(DnCount, false, DnBuffer);
-        SemifrontierCollector.CollectDn(DnBuffer, DnCount);
+        GpuSolver.CalcGPU_Down(DnCount, DnBuffer);
+        SemifrontierCollectorDown.Collect(DnBuffer, DnCount);
         DnCount = 0;
     }
 
@@ -73,6 +75,7 @@ public class UpDownCollector
     {
         FlushUp();
         FlushDn();
-        SemifrontierCollector.Close();
+        SemifrontierCollectorUp.Close();
+        SemifrontierCollectorDown.Close();
     }
 }

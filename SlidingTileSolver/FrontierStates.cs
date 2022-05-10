@@ -19,8 +19,8 @@ public class FrontierStates
     private byte[] CollectMap1;
     private byte[] CollectMap2;
 
-    public const long BaseIndexUpDownMask = (1L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
-    public const long BaseIndexLeftRightMask = (16L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
+    public static long BaseIndexUpDownMask = (1L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
+    public static long BaseIndexLeftRightMask = (16L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
     private long BaseIndex;
     
     public void SetSegment(long segment)
@@ -102,7 +102,6 @@ public class FrontierStates
     {
         for (int i = 0; i < len; i++)
         {
-            //long val = buffer[i] - (BaseIndex<<4);
             long val = buffer[i] & BaseIndexLeftRightMask;
             StatesMap[val >> (STATES_MAP_SKIP_POW + 4)] = 1;
             States[val >> 8] |= LeftRightMap[val & 255];
@@ -110,12 +109,11 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddUp(long[] buffer, int count)
+    public void AddUp(uint[] buffer, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            //long val = buffer[i] - BaseIndex;
-            long val = buffer[i] & BaseIndexUpDownMask;
+            long val = buffer[i];
             int offset = (int)((val & 15) << 2);
             StatesMap[val >> STATES_MAP_SKIP_POW] = 1;
             States[val >> 4] |= (ulong)PuzzleInfo.STATE_DN << offset;
@@ -123,11 +121,11 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddDown(long[] buffer, int count)
+    public void AddDown(uint[] buffer, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            long val = buffer[i] - BaseIndex;
+            long val = buffer[i];
             int offset = (int)((val & 15) << 2);
             StatesMap[val >> STATES_MAP_SKIP_POW] = 1;
             States[val >> 4] |= (ulong)PuzzleInfo.STATE_UP << offset;
@@ -137,6 +135,7 @@ public class FrontierStates
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe long Collect(FrontierCollector collector)
     {
+        long baseIndexWithOffset = BaseIndex << 4;
         long count = 0;
         fixed (ulong* statesPtr = States)
         {
@@ -150,7 +149,7 @@ public class FrontierStates
                 {
                     ulong val = statesPtr[i];
                     if (val == 0) continue;
-                    long baseIndex = (BaseIndex<<4) + (i << 8);
+                    long baseIndex = baseIndexWithOffset | (i << 8);
 
                     while (val != 0)
                     {

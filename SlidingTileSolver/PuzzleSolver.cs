@@ -22,21 +22,21 @@ public class PuzzleSolver
         var newFrontier = new Frontier("d:/PUZ/frontier.2", info);
         long[] buffer = new long[PuzzleInfo.FRONTIER_BUFFER_SIZE];
 
+        uint[] uiBuffer = new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
         // Fill initial state
         buffer[0] = (info.InitialIndex << 4) | info.GetState(initialIndex);
         frontier.Write(0, buffer, 1);
 
-        using var semiFrontier = new SegmentedFileLong("c:/PUZ/semifrontier", info.SegmentsCount * 2);
-        var semifrontierCollector = new SemifrontierCollector(semiFrontier, info);
+        using var semiFrontierUp = new SegmentedFile("c:/PUZ/semifrontier.up", info.SegmentsCount);
+        using var semiFrontierDown = new SegmentedFile("c:/PUZ/semifrontier.dn", info.SegmentsCount);
+        var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
+        var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
 
         var states = new FrontierStates(info);
-        var upDownCollector = new UpDownCollector(semifrontierCollector);
+        var upDownCollector = new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown);
 
         TimeSpan S1 = TimeSpan.Zero;
         TimeSpan S2 = TimeSpan.Zero;
-        TimeSpan S3 = TimeSpan.Zero;
-        TimeSpan S4 = TimeSpan.Zero;
-        TimeSpan S5 = TimeSpan.Zero;
 
         Console.WriteLine($"Step: {0}; states: {1}");
         results.Add(1);
@@ -44,8 +44,6 @@ public class PuzzleSolver
         for (int step = 1; step < 1000; step++)
         {
             var sw = Stopwatch.StartNew();
-
-            semiFrontier.Clear();
 
             // Fill semi-frontier
             for (int s = 0; s < info.SegmentsCount; s++)
@@ -69,17 +67,17 @@ public class PuzzleSolver
             {
                 states.SetSegment(s);
                 // up
-                for (int p = 0; p < semiFrontier.SegmentParts(2 * s); p++)
+                for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
                 {
-                    int len = semiFrontier.ReadSegment(2 * s, p, buffer);
-                    states.AddUp(buffer, len);
+                    int len = semiFrontierUp.ReadSegment(s, p, uiBuffer);
+                    states.AddUp(uiBuffer, len);
                 }
 
                 // down
-                for (int p = 0; p < semiFrontier.SegmentParts(2 * s + 1); p++)
+                for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
                 {
-                    int len = semiFrontier.ReadSegment(2 * s + 1, p, buffer);
-                    states.AddDown(buffer, len);
+                    int len = semiFrontierDown.ReadSegment(s, p, uiBuffer);
+                    states.AddDown(uiBuffer, len);
                 }
 
                 for (int p = 0; p < frontier.SegmentParts(s); p++)
@@ -88,7 +86,7 @@ public class PuzzleSolver
                     states.AddLeftRight(buffer, len);
                 }
 
-                var frontierCollector = new FrontierCollector(newFrontier, s);
+                var frontierCollector = new FrontierCollector(newFrontier, s, buffer);
                 count += states.Collect(frontierCollector);
             }
 
@@ -98,21 +96,20 @@ public class PuzzleSolver
             frontier = newFrontier;
             newFrontier = tmp;
             newFrontier.Clear();
-            semiFrontier.Clear();
-
-            S5 += sw.Elapsed;
+            semiFrontierUp.Clear();
+            semiFrontierDown.Clear();
 
             if (count == 0) break;
             results.Add(count);
             Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed}");
         }
         Console.WriteLine($"Total time: {totalTime.Elapsed}");
-        GpuSolver.PrintStats();
         Console.WriteLine($"S1={S1}");
         Console.WriteLine($"S2={S2}");
-        Console.WriteLine($"S3={S3}");
-        Console.WriteLine($"S4={S4}");
-        Console.WriteLine($"S5={S5}");
+        GpuSolver.PrintStats();
+        SegmentedFile.PrintStats();
+        SegmentedFileByte.PrintStats();
+        SegmentedFileLong.PrintStats();
         frontier.Dispose();
         newFrontier.Dispose();
         return results.ToArray();

@@ -6,13 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public struct FilePart
-{
-    public long Offset;
-    public int Length;
-}
-
-public class SegmentedFile : IDisposable
+public class SegmentedFileByte : IDisposable
 {
     class Segment
     {
@@ -31,7 +25,7 @@ public class SegmentedFile : IDisposable
     private readonly object Sync = new object();
     private readonly Stopwatch Timer = new Stopwatch();
 
-    public SegmentedFile(string fileName, int segmentsCount)
+    public SegmentedFileByte(string fileName, int segmentsCount)
     {
         FileName = fileName;
         Stream = Util.OpenFile(fileName);
@@ -53,7 +47,7 @@ public class SegmentedFile : IDisposable
         Stream.Position = 0;
     }
 
-    public unsafe void WriteSegment(int segment, uint[] buffer, int offset, int length)
+    public void WriteSegment(int segment, byte[] buffer, int offset, int length)
     {
         if (length == 0) return;
 
@@ -63,12 +57,8 @@ public class SegmentedFile : IDisposable
         {
             Timer.Restart();
             part.Offset = Stream.Position;
-            fixed (uint* bufPtr = buffer)
-            {
-                var span = new ReadOnlySpan<byte>((byte*)(bufPtr + offset), length * 4);
-                Stream.Write(span);
-            }
-            BytesWritten += length * 4;
+            Stream.Write(buffer, 0, length);
+            BytesWritten += length;
             WriteTime += Timer.Elapsed;
         }
         Segments[segment].Parts.Add(part);
@@ -79,20 +69,16 @@ public class SegmentedFile : IDisposable
         return Segments[segment].Parts.Count;
     }
 
-    public unsafe int ReadSegment(int segment, int part, uint[] buffer)
+    public unsafe int ReadSegment(int segment, int part, byte[] buffer)
     {
         var segmentPart = Segments[segment].Parts[part];
         lock (Sync)
         {
             Timer.Restart();
             Stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
-            fixed (uint* bufPtr = buffer)
-            {
-                var span = new Span<byte>((byte*)(bufPtr), segmentPart.Length * 4);
-                int read = Stream.Read(span);
-                if (read != segmentPart.Length * 4) throw new Exception($"Error: read={read} exp={span.Length}");
-            }
-            BytesRead += segmentPart.Length * 4;
+            int read = Stream.Read(buffer, 0, segmentPart.Length);
+            if (read != segmentPart.Length) throw new Exception($"Error: read={read} exp={segmentPart.Length}");
+            BytesRead += segmentPart.Length;
             ReadTime += Timer.Elapsed;
         }
         return segmentPart.Length;
@@ -100,7 +86,7 @@ public class SegmentedFile : IDisposable
 
     public static void PrintStats()
     {
-        Console.WriteLine($"SegmentedFileUint: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
+        Console.WriteLine($"SegmentedFileBytes: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
     }
 
     public void Dispose()

@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public const int SEGMENT_SIZE_POW = 32;
-    public const long SEGMENT_MASK = (1L << SEGMENT_SIZE_POW) - 1;
+    public static int SEGMENT_SIZE_POW = 32;
+    public static long SEGMENT_MASK = (1L << SEGMENT_SIZE_POW) - 1;
     public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
-    public const int SEMIFRONTIER_BUFFER_SIZE = 1024 * 1024 / 8;
+    public const int SEMIFRONTIER_BUFFER_SIZE = 1024 * 1024 / 4;
 
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;

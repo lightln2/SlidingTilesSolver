@@ -9,13 +9,15 @@ public class FrontierCollector
 {
     public readonly Frontier Frontier;
     public readonly int Segment;
-    private long[] Buffer = new long[PuzzleInfo.FRONTIER_BUFFER_SIZE];
+    private readonly long[] Buffer;
     private int BufferPosition;
 
-    public FrontierCollector(Frontier frontier, int segment)
+    public FrontierCollector(Frontier frontier, int segment, long[] buffer)
     {
         Frontier = frontier;
         Segment = segment;
+        Buffer = buffer;
+        BufferPosition = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

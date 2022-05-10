@@ -94,7 +94,7 @@ public class SegmentedFileLong : IDisposable
 
     public static void PrintStats()
     {
-        Console.WriteLine($"Frontier: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
+        Console.WriteLine($"SegmentedFileLong: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
     }
 
     public void Dispose()
