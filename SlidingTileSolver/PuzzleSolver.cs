@@ -29,68 +29,84 @@ public class PuzzleSolver
 
         using var semiFrontierUp = new SegmentedFile("c:/PUZ/semifrontier.up", info.SegmentsCount);
         using var semiFrontierDown = new SegmentedFile("c:/PUZ/semifrontier.dn", info.SegmentsCount);
-        var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
-        var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
 
-        var states = new FrontierStates(info);
-        var upDownCollector = new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown);
-
-        TimeSpan S1 = TimeSpan.Zero;
-        TimeSpan S2 = TimeSpan.Zero;
+        TimeSpan TimerFillSemifrontier = TimeSpan.Zero;
+        TimeSpan TimerAddUpDown = TimeSpan.Zero;
+        TimeSpan TimerAddLeftRight = TimeSpan.Zero;
+        TimeSpan TimerCollect = TimeSpan.Zero;
+        var timer = new Stopwatch();
+        var sw = new Stopwatch();
 
         Console.WriteLine($"Step: {0}; states: {1}");
         results.Add(1);
+        long countSoFar = 1;
 
-        for (int step = 1; step < 1000; step++)
+        var states = new FrontierStates(info);
+        var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
+        var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
+        var upDownCollector = new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown);
+
+        for (int step = 1; step <= PuzzleInfo.MaxSteps; step++)
         {
-            var sw = Stopwatch.StartNew();
+            sw.Restart();
+            timer.Restart();
 
-            // Fill semi-frontier
-            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                for (int p = 0; p < frontier.SegmentParts(s); p++)
+                // Fill semi-frontier
+                for (int s = 0; s < info.SegmentsCount; s++)
                 {
-                    int len = frontier.Read(s, p, buffer);
-                    upDownCollector.Collect(buffer, len);
+                    for (int p = 0; p < frontier.SegmentParts(s); p++)
+                    {
+                        int len = frontier.Read(s, p, buffer);
+                        upDownCollector.Collect(buffer, len);
+                    }
                 }
+
+                upDownCollector.Close();
+
+                TimerFillSemifrontier += timer.Elapsed;
+
             }
-
-            upDownCollector.Close();
-
-            S1 += sw.Elapsed;
-
             // Fill new frontier
 
             long count = 0;
 
-            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                states.SetSegment(s);
-                // up
-                for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
+                for (int s = 0; s < info.SegmentsCount; s++)
                 {
-                    int len = semiFrontierUp.ReadSegment(s, p, uiBuffer);
-                    states.AddUp(uiBuffer, len);
-                }
+                    states.SetSegment(s);
+                    timer.Restart();
+                    // up
+                    for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
+                    {
+                        int len = semiFrontierUp.ReadSegment(s, p, uiBuffer);
+                        states.AddUp(uiBuffer, len);
+                    }
+                    // down
+                    for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
+                    {
+                        int len = semiFrontierDown.ReadSegment(s, p, uiBuffer);
+                        states.AddDown(uiBuffer, len);
+                    }
 
-                // down
-                for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
-                {
-                    int len = semiFrontierDown.ReadSegment(s, p, uiBuffer);
-                    states.AddDown(uiBuffer, len);
-                }
+                    TimerAddUpDown += timer.Elapsed;
+                    timer.Restart();
 
-                for (int p = 0; p < frontier.SegmentParts(s); p++)
-                {
-                    int len = frontier.Read(s, p, buffer);
-                    states.AddLeftRight(buffer, len);
-                }
+                    for (int p = 0; p < frontier.SegmentParts(s); p++)
+                    {
+                        int len = frontier.Read(s, p, buffer);
+                        states.AddLeftRight(buffer, len);
+                    }
 
-                var frontierCollector = new FrontierCollector(newFrontier, s, buffer);
-                count += states.Collect(frontierCollector);
+                    TimerAddLeftRight += timer.Elapsed;
+                    timer.Restart();
+
+                    var frontierCollector = new FrontierCollector(newFrontier, s, buffer);
+                    count += states.Collect(frontierCollector);
+
+                    TimerCollect += timer.Elapsed;
+                }
             }
-
-            S2 += sw.Elapsed;
 
             var tmp = frontier;
             frontier = newFrontier;
@@ -101,15 +117,26 @@ public class PuzzleSolver
 
             if (count == 0) break;
             results.Add(count);
-            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed}");
+            countSoFar += count;
+            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed})");
         }
+        Console.WriteLine($"Steps: {results.Count - 1}, Total: {countSoFar:N0}, eq={countSoFar == info.RealStates}");
+        Console.WriteLine($"{string.Join(" ", results)}");
         Console.WriteLine($"Total time: {totalTime.Elapsed}");
-        Console.WriteLine($"S1={S1}");
-        Console.WriteLine($"S2={S2}");
+        Console.WriteLine();
+        Console.WriteLine($"Timer.FillSemifrontier={TimerFillSemifrontier}");
         GpuSolver.PrintStats();
+        UpDownCollector.PrintStats();
+        SemifrontierCollector.PrintStats();
         SegmentedFile.PrintStats();
+        Console.WriteLine();
+        Console.WriteLine($"Timer.AddUpDown={TimerAddUpDown}");
+        Console.WriteLine($"Timer.AddLeftRight={TimerAddLeftRight}");
+        Console.WriteLine($"Timer.FrontierCollector.Collect={TimerCollect}");
         SegmentedFileByte.PrintStats();
-        SegmentedFileLong.PrintStats();
+        Frontier.PrintStats();
+        FrontierStates.PrintStats();
+        PackStates.PrintStats();
         frontier.Dispose();
         newFrontier.Dispose();
         return results.ToArray();

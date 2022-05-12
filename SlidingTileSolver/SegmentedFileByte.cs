@@ -57,7 +57,7 @@ public class SegmentedFileByte : IDisposable
         {
             Timer.Restart();
             part.Offset = Stream.Position;
-            Stream.Write(buffer, 0, length);
+            Stream.Write(buffer, offset, length);
             BytesWritten += length;
             WriteTime += Timer.Elapsed;
         }

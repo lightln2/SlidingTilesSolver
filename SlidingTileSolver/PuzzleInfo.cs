@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 public class PuzzleInfo
 {
     public static int SEGMENT_SIZE_POW = 32;
-    public static long SEGMENT_MASK = (1L << SEGMENT_SIZE_POW) - 1;
+
     public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
-    public const int SEMIFRONTIER_BUFFER_SIZE = 1024 * 1024 / 4;
+
+    public const int SEMIFRONTIER_BUFFER_POW = 18; // 1M / 4
+    public const int SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW); // 1M values (uint);
 
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;
@@ -22,13 +24,15 @@ public class PuzzleInfo
 
     public readonly int SegmentsCount;
 
+    public static int MaxSteps = 10000;
+
     public PuzzleInfo(int width, int height, int initialIndex)
     {
         Width = width;
         Height = height;
         Size = width * height;
         InitialIndex = initialIndex;
-        if (InitialIndex >= 16) throw new Exception("Initial index should be from 0 to 16");
+        if (InitialIndex >= Size) throw new Exception($"Initial index should be from 0 to {Size}");
         RealStates = Util.Factorial(Size) / 2;
         Total = Util.Factorial(Size - 1) * 16 / 2;
         SegmentsCount = (int)((Total >> SEGMENT_SIZE_POW) + 1);
@@ -60,13 +64,4 @@ public class PuzzleInfo
         return state;
     }
 
-    public string PrintState(long st)
-    {
-        StringBuilder sb = new StringBuilder();
-        if ((st & STATE_UP) != 0) sb.Append($"U");
-        if ((st & STATE_DN) != 0) sb.Append($"D");
-        if ((st & STATE_LT) != 0) sb.Append($"L");
-        if ((st & STATE_RT) != 0) sb.Append($"R");
-        return sb.ToString();
-    }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,6 +15,10 @@ public class UpDownCollector
     private readonly long[] DnBuffer = new long[GpuSolver.GPUSIZE];
     private int DnCount;
 
+    private static TimeSpan TimeCollect = TimeSpan.Zero;
+    private static TimeSpan TimeClose = TimeSpan.Zero;
+    private Stopwatch Timer = new Stopwatch();
+
     public UpDownCollector(SemifrontierCollector semifrontierCollectorUp, SemifrontierCollector semifrontierCollectorDown)
     {
         SemifrontierCollectorUp = semifrontierCollectorUp;
@@ -23,6 +28,7 @@ public class UpDownCollector
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Collect(long[] buffer, int len)
     {
+        Timer.Restart();
         for (int i = 0; i < len; i++)
         {
             long val = buffer[i];
@@ -35,6 +41,7 @@ public class UpDownCollector
                 AddDn(val >> 4);
             }
         }
+        TimeCollect += Timer.Elapsed;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -73,9 +80,16 @@ public class UpDownCollector
 
     public void Close()
     {
+        Timer.Restart();
         FlushUp();
         FlushDn();
         SemifrontierCollectorUp.Close();
         SemifrontierCollectorDown.Close();
+        TimeClose += Timer.Elapsed;
+    }
+
+    public static void PrintStats()
+    {
+        Console.WriteLine($"UpDownCollector: collect={TimeCollect} close={TimeClose}");
     }
 }

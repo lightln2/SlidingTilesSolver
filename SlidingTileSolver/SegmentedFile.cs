@@ -74,6 +74,24 @@ public class SegmentedFile : IDisposable
         Segments[segment].Parts.Add(part);
     }
 
+    public unsafe void WriteSegment(int segment, uint* buffer, int offset, int length)
+    {
+        if (length == 0) return;
+
+        FilePart part;
+        part.Length = length;
+        lock (Sync)
+        {
+            Timer.Restart();
+            part.Offset = Stream.Position;
+            var span = new ReadOnlySpan<byte>((byte*)(buffer + offset), length * 4);
+            Stream.Write(span);
+            BytesWritten += length * 4;
+            WriteTime += Timer.Elapsed;
+        }
+        Segments[segment].Parts.Add(part);
+    }
+
     public int SegmentParts(int segment)
     {
         return Segments[segment].Parts.Count;
