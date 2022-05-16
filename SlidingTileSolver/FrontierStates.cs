@@ -140,7 +140,8 @@ public class FrontierStates
     public unsafe long Collect(FrontierCollector collector)
     {
         Timer.Restart();
-        long baseIndexWithOffset = BaseIndex << 4;
+        //long baseIndexWithOffset = BaseIndex << 4;
+        long baseIndexWithOffset = 0;
         long count = 0;
         fixed (ulong* statesPtr = States)
         {

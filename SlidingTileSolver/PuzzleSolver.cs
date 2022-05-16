@@ -58,7 +58,7 @@ public class PuzzleSolver
                     for (int p = 0; p < frontier.SegmentParts(s); p++)
                     {
                         int len = frontier.Read(s, p, buffer);
-                        upDownCollector.Collect(buffer, len);
+                        upDownCollector.Collect(s, buffer, len);
                     }
                 }
 
@@ -137,6 +137,8 @@ public class PuzzleSolver
         Frontier.PrintStats();
         FrontierStates.PrintStats();
         PackStates.PrintStats();
+        PackInts.PrintStats();
+        PackBytes.PrintStats();
         frontier.Dispose();
         newFrontier.Dispose();
         return results.ToArray();

@@ -26,12 +26,14 @@ public class UpDownCollector
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Collect(long[] buffer, int len)
+    public void Collect(int segment, long[] buffer, int len)
     {
         Timer.Restart();
+        long baseIndex = ((long)segment << PuzzleInfo.SEGMENT_SIZE_POW) << 4;
         for (int i = 0; i < len; i++)
         {
-            long val = buffer[i];
+            long val = baseIndex | buffer[i];
+
             if ((val & PuzzleInfo.STATE_UP) != 0)
             {
                 AddUp(val >> 4);

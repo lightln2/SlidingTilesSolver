@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public static int SEGMENT_SIZE_POW = 32;
+    public const int SEGMENT_SIZE_POW = 32;
 
     public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
 
