@@ -12,8 +12,10 @@ public class PackInts
     private static TimeSpan TimeUnpack = TimeSpan.Zero;
     private static Stopwatch Timer = new Stopwatch();
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe static int Pack(uint[] arr, int count, byte[] buffer, int offset)
     {
+        if ((count & 15) != 0) throw new Exception("Count should be divisible by 16");
         Timer.Restart();
         int pos = offset;
         WriteVInt(arr[0], buffer, ref pos);
@@ -25,6 +27,7 @@ public class PackInts
         return pos - offset;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe static int Unpack(byte[] buffer, int offset, int length, uint[] arr)
     {
         Timer.Restart();

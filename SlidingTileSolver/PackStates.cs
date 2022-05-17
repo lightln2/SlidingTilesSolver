@@ -14,6 +14,7 @@ public class PackStates
     private static uint[] arrVals = new uint[400000000];
     private static byte[] arrStates = new byte[400000000];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static unsafe void WriteInt(byte[] buffer, int pos, int val)
     {
         fixed(byte* ptr = buffer)
@@ -22,6 +23,7 @@ public class PackStates
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static unsafe int ReadInt(byte[] buffer, int pos)
     {
         fixed (byte* ptr = buffer)
@@ -30,12 +32,13 @@ public class PackStates
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe static int Pack(long[] arr, int count, byte[] buffer)
     {
         if (count == 0) return 0;
         Timer.Restart();
 
-        int alignedCount = (count + 7) & ~7;
+        int alignedCount = (count + 15) & ~15;
 
         WriteInt(buffer, 0, count);
 
@@ -64,16 +67,19 @@ public class PackStates
         return 12 + statesLen + valsLen;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe static int Unpack(byte[] buffer, int length, long[] arr)
     {
         Timer.Restart();
         if (length == 0) return 0;
         int count = ReadInt(buffer, 0);
-        int alignedCount = (count + 7) & ~7;
+        int alignedCount = (count + 15) & ~15;
         int statesLen = ReadInt(buffer, 4);
         int valsLen = ReadInt(buffer, 8);
-        PackBytes.Unpack(buffer, 12, statesLen, arrStates);
-        PackInts.Unpack(buffer, 12 + statesLen, valsLen, arrVals);
+        int statesCnt = PackBytes.Unpack(buffer, 12, statesLen, arrStates);
+        int valsCnt = PackInts.Unpack(buffer, 12 + statesLen, valsLen, arrVals);
+        if (statesCnt != alignedCount) throw new Exception($"States cnt={statesCnt} exp={alignedCount}");
+        if (valsCnt != alignedCount) throw new Exception($"Vals cnt={valsCnt} exp={alignedCount}");
 
         long last = 0;
         for (int i = 0; i < count; i++)

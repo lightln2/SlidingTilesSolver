@@ -59,7 +59,7 @@ public class PackIntsTests
     [TestMethod]
     public void Test_7_HighNums()
     {
-        Test(8, i => uint.MaxValue);
+        Test(16, i => uint.MaxValue);
     }
 
 }

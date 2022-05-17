@@ -7,7 +7,7 @@ public class PackStatesTests
 {
     void Test(int size, Func<long, long> F)
     {
-        var arr = new long[size / 2 * 2];
+        var arr = new long[size];
         for (int i = 0; i < arr.Length; i++) arr[i] = F(i);
         var buffer = new byte[arr.Length * 5];
         int bytesLen = PackStates.Pack(arr, arr.Length, buffer);
