@@ -10,9 +10,13 @@ public class PackIntsTests
         var arr = new uint[size];
         for (uint i = 0; i < size; i++) arr[i] = F(i);
         var buffer = new byte[10 + arr.Length * 5];
+        var sw = Stopwatch.StartNew();
         int bytesLen = PackInts.Pack(arr, size, buffer, 9);
+        Console.WriteLine($"Pack: {sw.Elapsed}");
         Console.WriteLine($"{size} -> {bytesLen}");
+        sw.Restart();
         int len = PackInts.Unpack(buffer, 9, bytesLen, arr);
+        Console.WriteLine($"Unpack: {sw.Elapsed}");
         Assert.AreEqual(size, len);
         for (uint i = 0; i < size; i++)
         {

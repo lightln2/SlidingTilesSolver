@@ -10,9 +10,13 @@ public class PackStatesTests
         var arr = new long[size];
         for (int i = 0; i < arr.Length; i++) arr[i] = F(i);
         var buffer = new byte[arr.Length * 5];
+        var sw = Stopwatch.StartNew();
         int bytesLen = PackStates.Pack(arr, arr.Length, buffer);
+        Console.WriteLine($"Pack: {sw.Elapsed}");
         Console.WriteLine($"{size} -> {bytesLen}");
+        sw.Restart();
         int len = PackStates.Unpack(buffer, bytesLen, arr);
+        Console.WriteLine($"Unpack: {sw.Elapsed}");
         Assert.AreEqual(arr.Length, len);
         for (int i = 0; i < arr.Length; i++)
         {
