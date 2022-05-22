@@ -19,7 +19,7 @@ public unsafe class MemArena
 
     public byte* AllocBytes(long bytes)
     {
-        if (Position + bytes > Length) throw new Exception("Out of memory in arena");
+        if (Position + bytes > Length) throw new Exception($"Out of memory in arena: pos={Position:N0} bytes={bytes:N0} len={Length:N0}");
         byte* ptr = Arena + Position;
         Position += bytes;
         return ptr;

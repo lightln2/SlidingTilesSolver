@@ -68,12 +68,33 @@ public class Frontier : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Write(int segment, byte[] tempBuffer, uint[] vals, byte[] states, int count)
+    {
+        if (count == 0) return;
+        Timer.Restart();
+        int byteLen = PackStates.Pack(vals, states, count, tempBuffer);
+        File.WriteSegment(segment, tempBuffer, 0, byteLen);
+        TimeWrite += Timer.Elapsed;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Read(int segment, int part, uint[] vals, byte[] states)
     {
         Timer.Restart();
         int byteLen = File.ReadSegment(segment, part, ByteBuffer);
         if (byteLen == 0) return 0;
         int count = PackStates.Unpack(ByteBuffer, byteLen, vals, states);
+        TimeRead += Timer.Elapsed;
+        return count;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public int Read(int segment, int part, byte[] tempBuffer, uint[] vals, byte[] states)
+    {
+        Timer.Restart();
+        int byteLen = File.ReadSegment(segment, part, tempBuffer);
+        if (byteLen == 0) return 0;
+        int count = PackStates.Unpack(tempBuffer, byteLen, vals, states);
         TimeRead += Timer.Elapsed;
         return count;
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public static int THREADS = 4;
+    public static int THREADS = 3;
     public static int MaxSteps = 10000;
 
     public const int SEGMENT_SIZE_POW = 32;

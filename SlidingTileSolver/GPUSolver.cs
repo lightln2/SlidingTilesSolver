@@ -241,27 +241,31 @@ public unsafe class GpuSolver
     public static void CalcGPU_Up(int count, long[] indexes)
     {
         if (count == 0) return;
-        ProcessedValues += count;
-        var sw = Stopwatch.StartNew();
-        dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
-        life_kernel_up(count, pparams, dev.View);
-        accelerator.Synchronize();
-        dev.AsContiguous().CopyToCPU(ref indexes[0], count);
-        GpuExecTime += sw.Elapsed;
-        return;
+        lock(context)
+        {
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            life_kernel_up(count, pparams, dev.View);
+            accelerator.Synchronize();
+            dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+            GpuExecTime += sw.Elapsed;
+        }
     }
 
     public static void CalcGPU_Down(int count, long[] indexes)
     {
         if (count == 0) return;
-        ProcessedValues += count;
-        var sw = Stopwatch.StartNew();
-        dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
-        life_kernel_dn(count, pparams, dev.View);
-        accelerator.Synchronize();
-        dev.AsContiguous().CopyToCPU(ref indexes[0], count);
-        GpuExecTime += sw.Elapsed;
-        return;
+        lock (context)
+        {
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            life_kernel_dn(count, pparams, dev.View);
+            accelerator.Synchronize();
+            dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+            GpuExecTime += sw.Elapsed;
+        }
     }
 
 }

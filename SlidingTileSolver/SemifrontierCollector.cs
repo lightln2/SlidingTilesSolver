@@ -15,7 +15,6 @@ public unsafe class SemifrontierCollector
 
     private static TimeSpan TimeCollect = TimeSpan.Zero;
     private static TimeSpan TimeFlush = TimeSpan.Zero;
-    private Stopwatch Timer = new Stopwatch();
 
     public SemifrontierCollector(SegmentedFile semifrontier, PuzzleInfo info)
     {
@@ -28,15 +27,18 @@ public unsafe class SemifrontierCollector
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Collect(long[] buffer, int len)
     {
-        Timer.Restart();
-        fixed(long* bufferPtr = buffer)
+        var timer = Stopwatch.StartNew();
+        lock (Counts)
         {
-            for (int i = 0; i < len; i++)
+            fixed (long* bufferPtr = buffer)
             {
-                Add(bufferPtr + i, Buffers);
+                for (int i = 0; i < len; i++)
+                {
+                    Add(bufferPtr + i, Buffers);
+                }
             }
+            TimeCollect += timer.Elapsed;
         }
-        TimeCollect += Timer.Elapsed;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -54,12 +56,15 @@ public unsafe class SemifrontierCollector
 
     public void Close()
     {
-        Timer.Restart();
-        for (int i = 0; i < Segments; i++)
+        lock(Counts)
         {
-            if (Counts[i] > 0) Flush(i);
+            var timer = Stopwatch.StartNew();
+            for (int i = 0; i < Segments; i++)
+            {
+                if (Counts[i] > 0) Flush(i);
+            }
+            TimeFlush += timer.Elapsed;
         }
-        TimeFlush += Timer.Elapsed;
     }
 
     private void Flush(int segment)
