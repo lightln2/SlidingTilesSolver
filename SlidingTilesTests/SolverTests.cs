@@ -6,14 +6,23 @@ public class SolverTests
 {
     public void Test(int width, int height, int expectedMax, string counts)
     {
-        long[] res = PuzzleSolver.Solve(width, height, 0);
-        int max = res.Length - 1;
-        Assert.AreEqual(expectedMax, max);
-        Assert.AreEqual(counts, string.Join(" ", res));
+        Test(width, height, 0, expectedMax, counts);
+    }
+
+    public void TestPartial(int width, int height, int maxSteps, string counts)
+    {
+        try
+        {
+            PuzzleInfo.MaxSteps = maxSteps;
+            Test(width, height, maxSteps, counts);
+        }
+        finally { PuzzleInfo.MaxSteps = 10000; }
     }
 
     public void Test(int width, int height, int initialIndex, int expectedMax, string counts)
     {
+        PuzzleInfo.THREADS = 1;
+        PuzzleInfo.SetSemifrontierBufferPow(16);
         long[] res = PuzzleSolver.Solve(width, height, initialIndex);
         int max = res.Length - 1;
         Assert.AreEqual(expectedMax, max);
@@ -127,113 +136,67 @@ public class SolverTests
     [TestMethod]
     public void Test_12_4_3_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(4, 3, 30, "1 2 4 9 20 37 63 122 232 431 781 1392 2494 4442 7854 13899 24215 41802 71167 119888 198363 323206 515778 811000 1248011 1885279 2782396 4009722 5621354 7647872 10065800");
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(4, 3, 30,
+            "1 2 4 9 20 37 63 122 232 431 781 1392 2494 4442 7854 13899 24215 41802 71167 119888 198363 323206 515778 811000 1248011 1885279 2782396 4009722 5621354 7647872 10065800");
     }
 
     [TestMethod]
     public void Test_12_3_4_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(3, 4, 30, "1 2 4 9 20 37 63 122 232 431 781 1392 2494 4442 7854 13899 24215 41802 71167 119888 198363 323206 515778 811000 1248011 1885279 2782396 4009722 5621354 7647872 10065800");
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(3, 4, 30, 
+            "1 2 4 9 20 37 63 122 232 431 781 1392 2494 4442 7854 13899 24215 41802 71167 119888 198363 323206 515778 811000 1248011 1885279 2782396 4009722 5621354 7647872 10065800");
     }
 
 
     [TestMethod]
     public void Test_12_2_6_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(2, 6, 30, "1 2 3 6 11 20 36 60 95 155 258 426 688 1106 1723 2615 3901 5885 8851 13205 19508 28593 41179 58899 83582 118109 165136 228596 312542 423797 568233");
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(2, 6, 30, 
+            "1 2 3 6 11 20 36 60 95 155 258 426 688 1106 1723 2615 3901 5885 8851 13205 19508 28593 41179 58899 83582 118109 165136 228596 312542 423797 568233");
     }
 
     [TestMethod]
     public void Test_12_6_2_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(6, 2, 30, "1 2 3 6 11 20 36 60 95 155 258 426 688 1106 1723 2615 3901 5885 8851 13205 19508 28593 41179 58899 83582 118109 165136 228596 312542 423797 568233");
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(6, 2, 30, 
+            "1 2 3 6 11 20 36 60 95 155 258 426 688 1106 1723 2615 3901 5885 8851 13205 19508 28593 41179 58899 83582 118109 165136 228596 312542 423797 568233");
     }
 
     [TestMethod]
     public void Test_14_7_2_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(7, 2, 30, "1 2 3 6 11 20 37 67 117 198 329 557 942 1575 2597 4241 6724 10535 16396 25515 39362 60532 92089 138969 207274 307725 453000 664240 964874 1392975 1992353"
-            );
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(7, 2, 30,
+            "1 2 3 6 11 20 37 67 117 198 329 557 942 1575 2597 4241 6724 10535 16396 25515 39362 60532 92089 138969 207274 307725 453000 664240 964874 1392975 1992353");
     }
 
     [TestMethod]
     public void Test_14_2_7_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 30;
-            Test(2, 7, 30, "1 2 3 6 11 20 37 67 117 198 329 557 942 1575 2597 4241 6724 10535 16396 25515 39362 60532 92089 138969 207274 307725 453000 664240 964874 1392975 1992353"
-            );
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(2, 7, 30,
+            "1 2 3 6 11 20 37 67 117 198 329 557 942 1575 2597 4241 6724 10535 16396 25515 39362 60532 92089 138969 207274 307725 453000 664240 964874 1392975 1992353");
     }
 
     [TestMethod]
     public void Test_15_5_3_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 20;
-            Test(5, 3, 20, "1 2 4 9 21 42 89 164 349 644 1349 2473 5109 9110 18489 32321 64962 112445 223153 378761 740095"
-            );
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(5, 3, 20,
+            "1 2 4 9 21 42 89 164 349 644 1349 2473 5109 9110 18489 32321 64962 112445 223153 378761 740095");
     }
 
     [TestMethod]
     public void Test_15_3_5_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 20;
-            Test(3, 5, 20, "1 2 4 9 21 42 89 164 349 644 1349 2473 5109 9110 18489 32321 64962 112445 223153 378761 740095"
-            );
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(3, 5, 20,
+            "1 2 4 9 21 42 89 164 349 644 1349 2473 5109 9110 18489 32321 64962 112445 223153 378761 740095");
     }
 
-    // OOM!!!!
-    
     [TestMethod]
     public void Test_16_4_4_partial()
     {
-        try
-        {
-            PuzzleInfo.MaxSteps = 4;
-            Test(4, 4, 4, "1 2 4 10 24");
-            //PuzzleInfo.MaxSteps = 10;
-            //Test(4, 4, 10, "1 2 4 10 24 54 107 212 446 946 1948");
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
+        TestPartial(4, 4, 10, "1 2 4 10 24 54 107 212 446 946 1948");
     }
 
 
-    /*
     [TestMethod]
     public void Test_12_4_3()
     {
@@ -281,5 +244,4 @@ public class SolverTests
                 "2749552 2068975 1510134 1064591 720002 464913 284204 165094 89649 45758 21471 9583 3829 1427 430 129 33 12 2"
         );
     }
-    */
 }

@@ -22,6 +22,11 @@ public class Frontier : IDisposable
         File = new SegmentedFileByte(file, info.SegmentsCount);
     }
 
+    public Frontier(PuzzleInfo info, params string[] files)
+    {
+        File = new SegmentedFileByte(info.SegmentsCount, files);
+    }
+
     public int SegmentsCount => File.SegmentsCount;
 
     public int SegmentParts(int segment) => File.SegmentParts(segment);

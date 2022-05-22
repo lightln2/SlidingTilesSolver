@@ -18,18 +18,18 @@ public class PuzzleSolver
         Console.WriteLine(info);
         var results = new List<long>();
 
-        var frontier = new Frontier("d:/PUZ/frontier.1", info);
-        var newFrontier = new Frontier("d:/PUZ/frontier.2", info);
+        var frontier = new Frontier(info, "c:/PUZ/frontier.1-p1", "d:/PUZ/frontier.1-p2");
+        var newFrontier = new Frontier(info, "d:/PUZ/frontier.2-p1", "c:/PUZ/frontier.2-p2");
 
-        uint[] valsBuffer = new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
-        byte[] statesBuffer = new byte[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
+        uint[] valsBuffer = new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE];
+        byte[] statesBuffer = new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE];
         // Fill initial state
         valsBuffer[0] = (uint)(initialIndex);
         statesBuffer[0] = (byte)(info.GetState(initialIndex));
         frontier.Write(0, valsBuffer, statesBuffer, 1);
 
-        using var semiFrontierUp = new SegmentedFile("c:/PUZ/semifrontier.up", info.SegmentsCount);
-        using var semiFrontierDown = new SegmentedFile("c:/PUZ/semifrontier.dn", info.SegmentsCount);
+        using var semiFrontierUp = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier.up-p1", "d:/PUZ/semifrontier.up-p2");
+        using var semiFrontierDown = new SegmentedFile(info.SegmentsCount, "d:/PUZ/semifrontier.dn-p1", "c:/PUZ/semifrontier.dn-p2");
 
         TimeSpan TimerFillSemifrontier = TimeSpan.Zero;
         TimeSpan TimerAddUpDown = TimeSpan.Zero;
@@ -53,22 +53,20 @@ public class PuzzleSolver
             sw.Restart();
             timer.Restart();
 
+            // Fill semi-frontier
+            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                // Fill semi-frontier
-                for (int s = 0; s < info.SegmentsCount; s++)
+                for (int p = 0; p < frontier.SegmentParts(s); p++)
                 {
-                    for (int p = 0; p < frontier.SegmentParts(s); p++)
-                    {
-                        int len = frontier.Read(s, p, valsBuffer, statesBuffer);
-                        upDownCollector.Collect(s, valsBuffer, statesBuffer, len);
-                    }
+                    int len = frontier.Read(s, p, valsBuffer, statesBuffer);
+                    upDownCollector.Collect(s, valsBuffer, statesBuffer, len);
                 }
-
-                upDownCollector.Close();
-
-                TimerFillSemifrontier += timer.Elapsed;
-
             }
+
+            upDownCollector.Close();
+
+            TimerFillSemifrontier += timer.Elapsed;
+
             // Fill new frontier
 
             long count = 0;
@@ -141,6 +139,9 @@ public class PuzzleSolver
         PackBytes.PrintStats();
         frontier.Dispose();
         newFrontier.Dispose();
+
+        info.Close();
+
         return results.ToArray();
     }
 }

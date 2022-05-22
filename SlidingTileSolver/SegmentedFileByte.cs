@@ -18,17 +18,22 @@ public class SegmentedFileByte : IDisposable
     private static long BytesWritten;
     private static long BytesRead;
 
-    public readonly string FileName;
-    private readonly FileStream Stream;
+    private readonly FileStream[] Streams;
     private readonly Segment[] Segments;
-
-    private readonly object Sync = new object();
-    private readonly Stopwatch Timer = new Stopwatch();
 
     public SegmentedFileByte(string fileName, int segmentsCount)
     {
-        FileName = fileName;
-        Stream = Util.OpenFile(fileName);
+        Streams = new FileStream[] { Util.OpenFile(fileName) };
+        Segments = new Segment[segmentsCount];
+        for (int i = 0; i < Segments.Length; i++)
+        {
+            Segments[i] = new Segment();
+        }
+    }
+
+    public SegmentedFileByte(int segmentsCount, params string[] fileNames)
+    {
+        Streams = fileNames.Select(f => Util.OpenFile(f)).ToArray();
         Segments = new Segment[segmentsCount];
         for (int i = 0; i < Segments.Length; i++)
         {
@@ -44,22 +49,24 @@ public class SegmentedFileByte : IDisposable
         {
             Segments[i].Parts.Clear();
         }
-        Stream.Position = 0;
+        foreach (var stream in Streams) stream.Position = 0;
     }
 
     public void WriteSegment(int segment, byte[] buffer, int offset, int length)
     {
         if (length == 0) return;
 
+        var stream = Streams[segment % Streams.Length];
+
         FilePart part;
         part.Length = length;
-        lock (Sync)
+        lock (stream)
         {
-            Timer.Restart();
-            part.Offset = Stream.Position;
-            Stream.Write(buffer, offset, length);
+            var timer = Stopwatch.StartNew();
+            part.Offset = stream.Position;
+            stream.Write(buffer, offset, length);
             BytesWritten += length;
-            WriteTime += Timer.Elapsed;
+            WriteTime += timer.Elapsed;
         }
         Segments[segment].Parts.Add(part);
     }
@@ -72,14 +79,17 @@ public class SegmentedFileByte : IDisposable
     public unsafe int ReadSegment(int segment, int part, byte[] buffer)
     {
         var segmentPart = Segments[segment].Parts[part];
-        lock (Sync)
+
+        var stream = Streams[segment % Streams.Length];
+
+        lock (stream)
         {
-            Timer.Restart();
-            Stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
-            int read = Stream.Read(buffer, 0, segmentPart.Length);
+            var timer = Stopwatch.StartNew();
+            stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
+            int read = stream.Read(buffer, 0, segmentPart.Length);
             if (read != segmentPart.Length) throw new Exception($"Error: read={read} exp={segmentPart.Length}");
             BytesRead += segmentPart.Length;
-            ReadTime += Timer.Elapsed;
+            ReadTime += timer.Elapsed;
         }
         return segmentPart.Length;
     }
@@ -91,6 +101,6 @@ public class SegmentedFileByte : IDisposable
 
     public void Dispose()
     {
-        Stream.Dispose();
+        foreach (var stream in Streams) stream.Dispose();
     }
 }

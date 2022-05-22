@@ -24,17 +24,22 @@ public class SegmentedFile : IDisposable
     private static long BytesWritten;
     private static long BytesRead;
 
-    public readonly string FileName;
-    private readonly FileStream Stream;
+    private readonly FileStream[] Streams;
     private readonly Segment[] Segments;
-
-    private readonly object Sync = new object();
-    private readonly Stopwatch Timer = new Stopwatch();
 
     public SegmentedFile(string fileName, int segmentsCount)
     {
-        FileName = fileName;
-        Stream = Util.OpenFile(fileName);
+        Streams = new FileStream[] { Util.OpenFile(fileName) };
+        Segments = new Segment[segmentsCount];
+        for (int i = 0; i < Segments.Length; i++)
+        {
+            Segments[i] = new Segment();
+        }
+    }
+
+    public SegmentedFile(int segmentsCount, params string[] fileNames)
+    {
+        Streams = fileNames.Select(f => Util.OpenFile(f)).ToArray();
         Segments = new Segment[segmentsCount];
         for (int i = 0; i < Segments.Length; i++)
         {
@@ -50,26 +55,28 @@ public class SegmentedFile : IDisposable
         {
             Segments[i].Parts.Clear();
         }
-        Stream.Position = 0;
+        foreach (var stream in Streams) stream.Position = 0;
     }
 
     public unsafe void WriteSegment(int segment, uint[] buffer, int offset, int length)
     {
         if (length == 0) return;
 
+        var stream = Streams[segment % Streams.Length];
+
         FilePart part;
         part.Length = length;
-        lock (Sync)
+        lock (stream)
         {
-            Timer.Restart();
-            part.Offset = Stream.Position;
+            var timer = Stopwatch.StartNew();
+            part.Offset = stream.Position;
             fixed (uint* bufPtr = buffer)
             {
                 var span = new ReadOnlySpan<byte>((byte*)(bufPtr + offset), length * 4);
-                Stream.Write(span);
+                stream.Write(span);
             }
             BytesWritten += length * 4;
-            WriteTime += Timer.Elapsed;
+            WriteTime += timer.Elapsed;
         }
         Segments[segment].Parts.Add(part);
     }
@@ -78,16 +85,18 @@ public class SegmentedFile : IDisposable
     {
         if (length == 0) return;
 
+        var stream = Streams[segment % Streams.Length];
+
         FilePart part;
         part.Length = length;
-        lock (Sync)
+        lock (stream)
         {
-            Timer.Restart();
-            part.Offset = Stream.Position;
+            var timer = Stopwatch.StartNew();
+            part.Offset = stream.Position;
             var span = new ReadOnlySpan<byte>((byte*)(buffer + offset), length * 4);
-            Stream.Write(span);
+            stream.Write(span);
             BytesWritten += length * 4;
-            WriteTime += Timer.Elapsed;
+            WriteTime += timer.Elapsed;
         }
         Segments[segment].Parts.Add(part);
     }
@@ -99,19 +108,20 @@ public class SegmentedFile : IDisposable
 
     public unsafe int ReadSegment(int segment, int part, uint[] buffer)
     {
+        var stream = Streams[segment % Streams.Length];
         var segmentPart = Segments[segment].Parts[part];
-        lock (Sync)
+        lock (stream)
         {
-            Timer.Restart();
-            Stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
+            var timer = Stopwatch.StartNew();
+            stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
             fixed (uint* bufPtr = buffer)
             {
                 var span = new Span<byte>((byte*)(bufPtr), segmentPart.Length * 4);
-                int read = Stream.Read(span);
+                int read = stream.Read(span);
                 if (read != segmentPart.Length * 4) throw new Exception($"Error: read={read} exp={span.Length}");
             }
             BytesRead += segmentPart.Length * 4;
-            ReadTime += Timer.Elapsed;
+            ReadTime += timer.Elapsed;
         }
         return segmentPart.Length;
     }
@@ -123,6 +133,6 @@ public class SegmentedFile : IDisposable
 
     public void Dispose()
     {
-        Stream.Dispose();
+        foreach (var stream in Streams) stream.Dispose();
     }
 }

@@ -6,15 +6,22 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public static int THREADS = 2;
+    public static int THREADS = 4;
     public static int MaxSteps = 10000;
 
     public const int SEGMENT_SIZE_POW = 32;
 
     public const int FRONTIER_BUFFER_SIZE = 1 * 1024 * 1024;
 
-    public const int SEMIFRONTIER_BUFFER_POW = 18; // 1M / 4
-    public const int SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW); // 1M / 4 values (uint);
+    // 18 is 1MB = 1M / 4 uint's
+    public static int SEMIFRONTIER_BUFFER_POW { get; private set; } = 18;
+    public static int SEMIFRONTIER_BUFFER_SIZE { get; private set; } = (1 << SEMIFRONTIER_BUFFER_POW);
+
+    public static void SetSemifrontierBufferPow(int pow)
+    {
+        SEMIFRONTIER_BUFFER_POW = pow;
+        SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW);
+    }
 
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;
@@ -74,4 +81,8 @@ public class PuzzleInfo
         return state;
     }
 
+    public void Close()
+    {
+        Arena.Close();
+    }
 }

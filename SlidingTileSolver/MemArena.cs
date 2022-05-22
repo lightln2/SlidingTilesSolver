@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 public unsafe class MemArena
 {
     private byte* Arena;
-    private readonly long Length;
+    private long Length;
     private long Position;
     public MemArena(long bytes)
     {
@@ -38,6 +38,13 @@ public unsafe class MemArena
     public uint* AllocUint(long uints)
     {
         return (uint*)AllocBytes(uints * 4);
+    }
+
+    public void Close()
+    {
+        Length = 0;
+        Marshal.FreeHGlobal(new IntPtr(Arena));
+        Arena = null;
     }
 
 }

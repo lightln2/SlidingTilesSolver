@@ -154,47 +154,37 @@ public unsafe class FrontierStates
     {
         Timer.Restart();
         long count = 0;
-        fixed(byte* statesMapPtr = StatesMap)
+        for (long q = 0; q < StatesMap.Length; q++)
         {
-            for (long q = 0; q < StatesMap.Length; q++)
+            if (StatesMap[q] == 0) continue;
+            StatesMap[q] = 0;
+            long start = q << (STATES_MAP_SKIP_POW - 4);
+            long end = Math.Min(StatesMapLength, (q + 1) << (STATES_MAP_SKIP_POW - 4));
+            for (long i = start; i < end; i++)
             {
-                if (q <= StatesMap.Length - 8 && (q & 7) == 0 && *(ulong*)(statesMapPtr + q) == 0)
-                {
-                    q += 7;
-                    continue;
-                }
-                if (statesMapPtr[q] == 0) continue;
-                statesMapPtr[q] = 0;
-                long start = q << (STATES_MAP_SKIP_POW - 4);
-                long end = Math.Min(StatesMapLength, (q + 1) << (STATES_MAP_SKIP_POW - 4));
-                for (long i = start; i < end; i++)
-                {
-                    ulong val = States[i];
-                    if (val == 0) continue;
-                    long baseIndex = i << 8;
+                ulong val = States[i];
+                if (val == 0) continue;
+                long baseIndex = i << 8;
 
-                    while (val != 0)
-                    {
-                        int bit = BitOperations.TrailingZeroCount(val);
-                        int j = (bit >> 3);
-                        int byteIndex = (j << 3);
-                        byte s = (byte)(val >> byteIndex);
-                        count += CollectCounts[s];
-                        int mapIndex = (j << 8) | s;
-                        byte b1 = CollectMap1[mapIndex];
-                        byte b2 = CollectMap2[mapIndex];
-                        if (b1 != 0) collector.Add(baseIndex | b1);
-                        if (b2 != 0) collector.Add(baseIndex | b2);
-                        val &= ~(0xFFUL << byteIndex);
-                    }
-                    States[i] = 0;
+                while (val != 0)
+                {
+                    int bit = BitOperations.TrailingZeroCount(val);
+                    int j = (bit >> 3);
+                    int byteIndex = (j << 3);
+                    byte s = (byte)(val >> byteIndex);
+                    count += CollectCounts[s];
+                    int mapIndex = (j << 8) | s;
+                    byte b1 = CollectMap1[mapIndex];
+                    byte b2 = CollectMap2[mapIndex];
+                    if (b1 != 0) collector.Add(baseIndex | b1);
+                    if (b2 != 0) collector.Add(baseIndex | b2);
+                    val &= ~(0xFFUL << byteIndex);
                 }
+                States[i] = 0;
             }
-            collector.Close();
         }
-
+        collector.Close();
         TimeCollect += Timer.Elapsed;
-
         return count;
     }
 
