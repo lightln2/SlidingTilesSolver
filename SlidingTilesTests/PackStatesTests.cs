@@ -5,65 +5,71 @@ using System.Diagnostics;
 [TestClass]
 public class PackStatesTests
 {
-    void Test(int size, Func<long, long> F)
+    void Test(int size, Func<long, long> F, Func<int, int> S)
     {
-        var arr = new long[size];
-        for (int i = 0; i < arr.Length; i++) arr[i] = F(i);
-        var buffer = new byte[arr.Length * 5];
+        var vals = new uint[size / 16 * 16 + 32];
+        var states = new byte[size / 16 * 16 + 32];
+        for (int i = 0; i < size; i++)
+        {
+            vals[i] = (uint)F(i);
+            states[i] = (byte)(S(i) % 16);
+        }
+        var buffer = new byte[size * 5 + 32];
         var sw = Stopwatch.StartNew();
-        int bytesLen = PackStates.Pack(arr, arr.Length, buffer);
+        int bytesLen = PackStates.Pack(vals, states, size, buffer);
         Console.WriteLine($"Pack: {sw.Elapsed}");
         Console.WriteLine($"{size} -> {bytesLen}");
         sw.Restart();
-        int len = PackStates.Unpack(buffer, bytesLen, arr);
+        int len = PackStates.Unpack(buffer, bytesLen, vals, states);
         Console.WriteLine($"Unpack: {sw.Elapsed}");
-        Assert.AreEqual(arr.Length, len);
-        for (int i = 0; i < arr.Length; i++)
+        Assert.AreEqual(size, len);
+        for (int i = 0; i < size; i++)
         {
-            if (arr[i] != F(i)) Assert.Fail($"at {i}: exp={F(i)} was={arr[i]}");
+            if (vals[i] != (uint)F(i)) Assert.Fail($"val at {i}: exp={(uint)F(i)} was={vals[i]}");
+            if (states[i] != S(i) % 16) Assert.Fail($"state at {i}: exp={S(i) % 16} was={states[i]}");
         }
     }
 
     [TestMethod]
     public void Test_1_SmallDiff()
     {
-        Test(1_000_000, i => (i << 4) | 13);
+        Test(1_000_000, i => i, i => 13);
     }
 
     [TestMethod]
     public void Test_2_MediumDiff()
     {
-        Test(1_000_001, i => ((i * 1000) << 4) | 11);
+        Test(1_000_001, i => i * 1000, i=> 11);
     }
 
     [TestMethod]
     public void Test_3_LargeDiff()
     {
-        Test(1_000_003, i => ((i * 20000) << 4) | (i & 15));
+        Test(1_000_003, i => i * 20000, i => i);
     }
 
     [TestMethod]
     public void Test_4_XLargeDiff()
     {
-        Test(1_005, i => ((i * 4_000_000) << 4) | 3);
+        Test(1_005, i => i * 4_000_000, i=> 3);
     }
 
     [TestMethod]
     public void Test_5_SmallPerformance()
     {
-        Test(400_000_000, i => 7 | (i << 4));
+        Test(400_000_000, i => i, i => 7);
     }
 
     [TestMethod]
     public void Test_6_MedPerformance()
     {
-        Test(200_000_001, i => 7 | ((i * 13) << 4));
+        Test(200_000_001, i => i * 13, i => 7);
     }
 
     [TestMethod]
     public void Test_7_AvgPerformance()
     {
-        Test(200_000_002, i => 7 | ((i * 13 + i / 200 * 200 + i / 20000 * 20000 + i / 2_000_000 * 1_000_000) << 4));
+        Test(200_000_002, i => i * 13 + i / 200 * 200 + i / 20000 * 20000 + i / 2_000_000 * 1_000_000, i => 7);
     }
 
 }

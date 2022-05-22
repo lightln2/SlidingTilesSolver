@@ -10,7 +10,7 @@ public unsafe class SemifrontierCollector
 {
     private readonly int Segments;
     private readonly SegmentedFile Semifrontier;
-    private uint[] Buffers;
+    private uint* Buffers;
     private readonly int[] Counts;
 
     private static TimeSpan TimeCollect = TimeSpan.Zero;
@@ -21,7 +21,7 @@ public unsafe class SemifrontierCollector
     {
         Segments = info.SegmentsCount;
         Semifrontier = semifrontier;
-        Buffers = new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE * Segments];
+        Buffers = info.Arena.AllocUint(PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE * Segments);
         Counts = new int[Segments];
     }
 
@@ -31,12 +31,9 @@ public unsafe class SemifrontierCollector
         Timer.Restart();
         fixed(long* bufferPtr = buffer)
         {
-            fixed (uint* dstPtr = Buffers)
+            for (int i = 0; i < len; i++)
             {
-                for (int i = 0; i < len; i++)
-                {
-                    Add(bufferPtr + i, dstPtr);
-                }
+                Add(bufferPtr + i, Buffers);
             }
         }
         TimeCollect += Timer.Elapsed;

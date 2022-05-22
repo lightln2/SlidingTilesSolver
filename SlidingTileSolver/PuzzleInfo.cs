@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
+    public static int THREADS = 2;
+    public static int MaxSteps = 10000;
+
     public const int SEGMENT_SIZE_POW = 32;
 
-    public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
+    public const int FRONTIER_BUFFER_SIZE = 1 * 1024 * 1024;
 
     public const int SEMIFRONTIER_BUFFER_POW = 18; // 1M / 4
-    public const int SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW); // 1M values (uint);
+    public const int SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW); // 1M / 4 values (uint);
 
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;
@@ -24,7 +27,8 @@ public class PuzzleInfo
 
     public readonly int SegmentsCount;
 
-    public static int MaxSteps = 10000;
+    public long BytesNeeded;
+    public MemArena Arena;
 
     public PuzzleInfo(int width, int height, int initialIndex)
     {
@@ -37,6 +41,12 @@ public class PuzzleInfo
         Total = Util.Factorial(Size - 1) * 16 / 2;
         SegmentsCount = (int)((Total >> SEGMENT_SIZE_POW) + 1);
         StatesMapLength = SegmentsCount == 1 ? Total : 1L << SEGMENT_SIZE_POW;
+
+        long statesMem = THREADS * StatesMapLength / 2;
+        long sfMem = SegmentsCount * 2L * SEMIFRONTIER_BUFFER_SIZE * 4;
+        BytesNeeded = Math.Max(statesMem, sfMem);
+        Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; Needed: {BytesNeeded:N0} bytes");
+        Arena = new MemArena(BytesNeeded);
     }
 
     public override string ToString()

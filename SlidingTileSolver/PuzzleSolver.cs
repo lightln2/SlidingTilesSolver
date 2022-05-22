@@ -43,6 +43,7 @@ public class PuzzleSolver
         long countSoFar = 1;
 
         var states = new FrontierStates(info);
+        info.Arena.Reset();
         var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
         var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
         var upDownCollector = new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown);
@@ -71,42 +72,40 @@ public class PuzzleSolver
             // Fill new frontier
 
             long count = 0;
+            states.Reset();
 
+            for (int s = 0; s < info.SegmentsCount; s++)
             {
-                for (int s = 0; s < info.SegmentsCount; s++)
+                timer.Restart();
+                // up
+                for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
                 {
-                    states.SetSegment(s);
-                    timer.Restart();
-                    // up
-                    for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
-                    {
-                        int len = semiFrontierUp.ReadSegment(s, p, valsBuffer);
-                        states.AddUp(valsBuffer, len);
-                    }
-                    // down
-                    for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
-                    {
-                        int len = semiFrontierDown.ReadSegment(s, p, valsBuffer);
-                        states.AddDown(valsBuffer, len);
-                    }
-
-                    TimerAddUpDown += timer.Elapsed;
-                    timer.Restart();
-
-                    for (int p = 0; p < frontier.SegmentParts(s); p++)
-                    {
-                        int len = frontier.Read(s, p, valsBuffer, statesBuffer);
-                        states.AddLeftRight(valsBuffer, statesBuffer, len);
-                    }
-
-                    TimerAddLeftRight += timer.Elapsed;
-                    timer.Restart();
-
-                    var frontierCollector = new FrontierCollector(newFrontier, s, valsBuffer, statesBuffer);
-                    count += states.Collect(frontierCollector);
-
-                    TimerCollect += timer.Elapsed;
+                    int len = semiFrontierUp.ReadSegment(s, p, valsBuffer);
+                    states.AddUp(valsBuffer, len);
                 }
+                // down
+                for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
+                {
+                    int len = semiFrontierDown.ReadSegment(s, p, valsBuffer);
+                    states.AddDown(valsBuffer, len);
+                }
+
+                TimerAddUpDown += timer.Elapsed;
+                timer.Restart();
+
+                for (int p = 0; p < frontier.SegmentParts(s); p++)
+                {
+                    int len = frontier.Read(s, p, valsBuffer, statesBuffer);
+                    states.AddLeftRight(valsBuffer, statesBuffer, len);
+                }
+
+                TimerAddLeftRight += timer.Elapsed;
+                timer.Restart();
+
+                var frontierCollector = new FrontierCollector(newFrontier, s, valsBuffer, statesBuffer);
+                count += states.Collect(frontierCollector);
+
+                TimerCollect += timer.Elapsed;
             }
 
             var tmp = frontier;
