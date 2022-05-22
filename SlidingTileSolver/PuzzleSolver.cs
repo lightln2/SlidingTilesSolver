@@ -20,12 +20,13 @@ public class PuzzleSolver
 
         var frontier = new Frontier("d:/PUZ/frontier.1", info);
         var newFrontier = new Frontier("d:/PUZ/frontier.2", info);
-        long[] buffer = new long[PuzzleInfo.FRONTIER_BUFFER_SIZE];
 
-        uint[] uiBuffer = new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
+        uint[] valsBuffer = new uint[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
+        byte[] statesBuffer = new byte[PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE];
         // Fill initial state
-        buffer[0] = (info.InitialIndex << 4) | info.GetState(initialIndex);
-        frontier.Write(0, buffer, 1);
+        valsBuffer[0] = (uint)(initialIndex);
+        statesBuffer[0] = (byte)(info.GetState(initialIndex));
+        frontier.Write(0, valsBuffer, statesBuffer, 1);
 
         using var semiFrontierUp = new SegmentedFile("c:/PUZ/semifrontier.up", info.SegmentsCount);
         using var semiFrontierDown = new SegmentedFile("c:/PUZ/semifrontier.dn", info.SegmentsCount);
@@ -57,8 +58,8 @@ public class PuzzleSolver
                 {
                     for (int p = 0; p < frontier.SegmentParts(s); p++)
                     {
-                        int len = frontier.Read(s, p, buffer);
-                        upDownCollector.Collect(s, buffer, len);
+                        int len = frontier.Read(s, p, valsBuffer, statesBuffer);
+                        upDownCollector.Collect(s, valsBuffer, statesBuffer, len);
                     }
                 }
 
@@ -79,14 +80,14 @@ public class PuzzleSolver
                     // up
                     for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
                     {
-                        int len = semiFrontierUp.ReadSegment(s, p, uiBuffer);
-                        states.AddUp(uiBuffer, len);
+                        int len = semiFrontierUp.ReadSegment(s, p, valsBuffer);
+                        states.AddUp(valsBuffer, len);
                     }
                     // down
                     for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
                     {
-                        int len = semiFrontierDown.ReadSegment(s, p, uiBuffer);
-                        states.AddDown(uiBuffer, len);
+                        int len = semiFrontierDown.ReadSegment(s, p, valsBuffer);
+                        states.AddDown(valsBuffer, len);
                     }
 
                     TimerAddUpDown += timer.Elapsed;
@@ -94,14 +95,14 @@ public class PuzzleSolver
 
                     for (int p = 0; p < frontier.SegmentParts(s); p++)
                     {
-                        int len = frontier.Read(s, p, buffer);
-                        states.AddLeftRight(buffer, len);
+                        int len = frontier.Read(s, p, valsBuffer, statesBuffer);
+                        states.AddLeftRight(valsBuffer, statesBuffer, len);
                     }
 
                     TimerAddLeftRight += timer.Elapsed;
                     timer.Restart();
 
-                    var frontierCollector = new FrontierCollector(newFrontier, s, buffer);
+                    var frontierCollector = new FrontierCollector(newFrontier, s, valsBuffer, statesBuffer);
                     count += states.Collect(frontierCollector);
 
                     TimerCollect += timer.Elapsed;

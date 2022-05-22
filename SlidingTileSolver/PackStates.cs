@@ -91,6 +91,59 @@ public class PackStates
         return count;
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe static int Pack(uint[] vals, byte[] states, int count, byte[] buffer)
+    {
+        if (count == 0) return 0;
+        Timer.Restart();
+
+        int alignedCount = (count + 15) & ~15;
+
+        for (int i = count - 1; i >= 1; i--)
+        {
+            vals[i] -= vals[i - 1];
+        }
+
+        for (int i = count; i < alignedCount; i++)
+        {
+            vals[i] = 0;
+            states[i] = 0;
+        }
+
+        int statesLen = PackBytes.Pack(states, alignedCount, buffer, 12);
+        int valsLen = PackInts.Pack(vals, alignedCount, buffer, 12 + statesLen);
+
+        WriteInt(buffer, 0, count);
+        WriteInt(buffer, 4, statesLen);
+        WriteInt(buffer, 8, valsLen);
+
+        TimePack += Timer.Elapsed;
+        return 12 + statesLen + valsLen;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe static int Unpack(byte[] buffer, int length, uint[] vals, byte[] states)
+    {
+        Timer.Restart();
+        if (length == 0) return 0;
+        int count = ReadInt(buffer, 0);
+        int alignedCount = (count + 15) & ~15;
+        int statesLen = ReadInt(buffer, 4);
+        int valsLen = ReadInt(buffer, 8);
+        int statesCnt = PackBytes.Unpack(buffer, 12, statesLen, states);
+        int valsCnt = PackInts.Unpack(buffer, 12 + statesLen, valsLen, vals);
+        if (statesCnt != alignedCount) throw new Exception($"States cnt={statesCnt} exp={alignedCount}");
+        if (valsCnt != alignedCount) throw new Exception($"Vals cnt={valsCnt} exp={alignedCount}");
+
+        for (int i = 1; i < count; i++)
+        {
+            vals[i] += vals[i - 1];
+        }
+        TimeUnpack += Timer.Elapsed;
+        return count;
+    }
+
     public static void PrintStats()
     {
         Console.WriteLine($"PackStates: pack={TimePack} unpack={TimeUnpack}");

@@ -46,6 +46,28 @@ public class UpDownCollector
         TimeCollect += Timer.Elapsed;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Collect(int segment, uint[] vals, byte[] states, int len)
+    {
+        Timer.Restart();
+        long baseIndex = ((long)segment << PuzzleInfo.SEGMENT_SIZE_POW);
+        for (int i = 0; i < len; i++)
+        {
+            long val = baseIndex | vals[i];
+            byte state = states[i];
+
+            if ((state & PuzzleInfo.STATE_UP) != 0)
+            {
+                AddUp(val);
+            }
+            if ((state & PuzzleInfo.STATE_DN) != 0)
+            {
+                AddDn(val);
+            }
+        }
+        TimeCollect += Timer.Elapsed;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private void AddUp(long value)
     {

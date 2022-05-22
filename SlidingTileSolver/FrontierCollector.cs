@@ -9,22 +9,26 @@ public class FrontierCollector
 {
     public readonly Frontier Frontier;
     public readonly int Segment;
-    private readonly long[] Buffer;
+    private readonly uint[] Vals;
+    private readonly byte[] States;
     private int BufferPosition;
 
-    public FrontierCollector(Frontier frontier, int segment, long[] buffer)
+    public FrontierCollector(Frontier frontier, int segment, uint[] vals, byte[] states)
     {
         Frontier = frontier;
         Segment = segment;
-        Buffer = buffer;
+        Vals = vals;
+        States = states;
         BufferPosition = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Add(long value)
     {
-        Buffer[BufferPosition++] = value;
-        if (BufferPosition == Buffer.Length)
+        Vals[BufferPosition] = (uint)(value >> 4);
+        States[BufferPosition] = (byte)(value & 15);
+        BufferPosition++;
+        if (BufferPosition == Vals.Length)
         {
             Flush();
         }
@@ -32,7 +36,7 @@ public class FrontierCollector
 
     private void Flush()
     {
-        Frontier.Write(Segment, Buffer, BufferPosition);
+        Frontier.Write(Segment, Vals, States, BufferPosition);
         BufferPosition = 0;
     }
 

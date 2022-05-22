@@ -113,6 +113,21 @@ public class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void AddLeftRight(uint[] vals, byte[] states, int len)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            byte mapIndex = (byte)((vals[i] << 4) | states[i]);
+            ulong x = LeftRightMap[mapIndex];
+            //if (x > 0)
+            {
+                StatesMap[vals[i] >> STATES_MAP_SKIP_POW] = 1;
+                States[vals[i] >> 4] |= x;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AddUp(uint[] buffer, int count)
     {
         for (int i = 0; i < count; i++)
@@ -140,8 +155,6 @@ public class FrontierStates
     public unsafe long Collect(FrontierCollector collector)
     {
         Timer.Restart();
-        //long baseIndexWithOffset = BaseIndex << 4;
-        long baseIndexWithOffset = 0;
         long count = 0;
         fixed (ulong* statesPtr = States)
         {
@@ -162,7 +175,7 @@ public class FrontierStates
                     {
                         ulong val = statesPtr[i];
                         if (val == 0) continue;
-                        long baseIndex = baseIndexWithOffset | (i << 8);
+                        long baseIndex = i << 8;
 
                         while (val != 0)
                         {
