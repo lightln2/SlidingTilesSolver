@@ -5,7 +5,8 @@ class Program
 {
     static void Main(string[] args)
     {
-        //PuzzleInfo.MaxSteps = 15;
-        PuzzleSolver.Solve(4, 3, 0);
+        var info = new PuzzleInfo(4, 3, 0);
+        //info.MaxSteps = 15;
+        PuzzleSolver.Solve(info);
     }
 }

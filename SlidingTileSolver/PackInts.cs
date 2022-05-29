@@ -130,7 +130,6 @@ public unsafe class PackInts
             }
         }
 
-
         if (pos != offset + length) throw new Exception($"pos={pos} len={length}");
 
         TimeUnpack += Timer.Elapsed;

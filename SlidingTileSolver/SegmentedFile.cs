@@ -58,7 +58,7 @@ public unsafe class SegmentedFile : IDisposable
         foreach (var stream in Streams) stream.Position = 0;
     }
 
-    public unsafe void WriteSegment(int segment, uint[] buffer, int offset, int length)
+    public unsafe void WriteSegment(int segment, uint[] buffer, long offset, int length)
     {
         fixed (uint* ptr = buffer)
         {
@@ -66,12 +66,12 @@ public unsafe class SegmentedFile : IDisposable
         }
     }
 
-    public unsafe void WriteSegment(int segment, uint* buffer, int offset, int length)
+    public unsafe void WriteSegment(int segment, uint* buffer, long offset, int length)
     {
         WriteSegment(segment, (byte*)buffer, offset * 4, length * 4);
     }
 
-    public void WriteSegment(int segment, byte[] buffer, int offset, int length)
+    public void WriteSegment(int segment, byte[] buffer, long offset, int length)
     {
         if (length == 0) return;
         fixed (byte* ptr = buffer)
@@ -80,7 +80,7 @@ public unsafe class SegmentedFile : IDisposable
         }
     }
 
-    public void WriteSegment(int segment, byte* buffer, int offset, int length)
+    public void WriteSegment(int segment, byte* buffer, long offset, int length)
     {
         if (length == 0) return;
 
