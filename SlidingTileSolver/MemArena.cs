@@ -35,6 +35,11 @@ public unsafe class MemArena
         return (ulong*)AllocBytes(ulongs * 8);
     }
 
+    public long* Alloclong(long longs)
+    {
+        return (long*)AllocBytes(longs * 8);
+    }
+
     public uint* AllocUint(long uints)
     {
         return (uint*)AllocBytes(uints * 4);

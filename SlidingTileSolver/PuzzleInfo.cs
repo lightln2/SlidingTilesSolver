@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public static int THREADS = 3;
-    public static int MaxSteps = 10000;
+    public static int THREADS = 4;
+    public int MaxSteps = 10000;
 
     public const int SEGMENT_SIZE_POW = 32;
 
@@ -50,9 +50,10 @@ public class PuzzleInfo
         StatesMapLength = SegmentsCount == 1 ? Total : 1L << SEGMENT_SIZE_POW;
 
         long statesMem = THREADS * StatesMapLength / 2;
+        long updownMem = THREADS * 2L * GpuSolver.GPUSIZE * 8;
         long sfMem = SegmentsCount * 2L * SEMIFRONTIER_BUFFER_SIZE * 4;
-        BytesNeeded = Math.Max(statesMem, sfMem);
-        Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; Needed: {BytesNeeded:N0} bytes");
+        BytesNeeded = Math.Max(statesMem, sfMem + updownMem);
+        Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; ud: {updownMem:N0} Needed: {BytesNeeded:N0} bytes");
         Arena = new MemArena(BytesNeeded);
     }
 

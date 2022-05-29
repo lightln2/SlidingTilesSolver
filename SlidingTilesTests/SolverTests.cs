@@ -9,21 +9,22 @@ public class SolverTests
         Test(width, height, 0, expectedMax, counts);
     }
 
-    public void TestPartial(int width, int height, int maxSteps, string counts)
-    {
-        try
-        {
-            PuzzleInfo.MaxSteps = maxSteps;
-            Test(width, height, maxSteps, counts);
-        }
-        finally { PuzzleInfo.MaxSteps = 10000; }
-    }
-
     public void Test(int width, int height, int initialIndex, int expectedMax, string counts)
     {
-        PuzzleInfo.THREADS = 1;
+        Test(new PuzzleInfo(width, height, initialIndex), expectedMax, counts);
+    }
+
+    public void TestPartial(int width, int height, int maxSteps, string counts)
+    {
+        var info = new PuzzleInfo(width, height, 0);
+        info.MaxSteps = maxSteps;
+        Test(info, maxSteps, counts);
+    }
+
+    public void Test(PuzzleInfo info, int expectedMax, string counts)
+    {
         PuzzleInfo.SetSemifrontierBufferPow(16);
-        long[] res = PuzzleSolver.Solve(width, height, initialIndex);
+        long[] res = PuzzleSolver.Solve(info);
         int max = res.Length - 1;
         Assert.AreEqual(expectedMax, max);
         Assert.AreEqual(counts, string.Join(" ", res));

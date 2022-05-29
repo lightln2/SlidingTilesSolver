@@ -25,17 +25,14 @@ public unsafe class SemifrontierCollector
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Collect(long[] buffer, int len)
+    public void Collect(long* buffer, int len)
     {
         var timer = Stopwatch.StartNew();
         lock (Counts)
         {
-            fixed (long* bufferPtr = buffer)
+            for (int i = 0; i < len; i++)
             {
-                for (int i = 0; i < len; i++)
-                {
-                    Add(bufferPtr + i, Buffers);
-                }
+                Add(buffer + i, Buffers);
             }
             TimeCollect += timer.Elapsed;
         }

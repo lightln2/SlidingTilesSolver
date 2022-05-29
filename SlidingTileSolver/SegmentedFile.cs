@@ -12,7 +12,7 @@ public struct FilePart
     public int Length;
 }
 
-public class SegmentedFile : IDisposable
+public unsafe class SegmentedFile : IDisposable
 {
     class Segment
     {
@@ -60,28 +60,27 @@ public class SegmentedFile : IDisposable
 
     public unsafe void WriteSegment(int segment, uint[] buffer, int offset, int length)
     {
-        if (length == 0) return;
-
-        var stream = Streams[segment % Streams.Length];
-
-        FilePart part;
-        part.Length = length;
-        lock (stream)
+        fixed (uint* ptr = buffer)
         {
-            var timer = Stopwatch.StartNew();
-            part.Offset = stream.Position;
-            fixed (uint* bufPtr = buffer)
-            {
-                var span = new ReadOnlySpan<byte>((byte*)(bufPtr + offset), length * 4);
-                stream.Write(span);
-            }
-            BytesWritten += length * 4;
-            WriteTime += timer.Elapsed;
+            WriteSegment(segment, ptr, offset, length);
         }
-        Segments[segment].Parts.Add(part);
     }
 
     public unsafe void WriteSegment(int segment, uint* buffer, int offset, int length)
+    {
+        WriteSegment(segment, (byte*)buffer, offset * 4, length * 4);
+    }
+
+    public void WriteSegment(int segment, byte[] buffer, int offset, int length)
+    {
+        if (length == 0) return;
+        fixed (byte* ptr = buffer)
+        {
+            WriteSegment(segment, ptr, offset, length);
+        }
+    }
+
+    public void WriteSegment(int segment, byte* buffer, int offset, int length)
     {
         if (length == 0) return;
 
@@ -93,9 +92,9 @@ public class SegmentedFile : IDisposable
         {
             var timer = Stopwatch.StartNew();
             part.Offset = stream.Position;
-            var span = new ReadOnlySpan<byte>((byte*)(buffer + offset), length * 4);
+            var span = new ReadOnlySpan<byte>(buffer + offset, length);
             stream.Write(span);
-            BytesWritten += length * 4;
+            BytesWritten += length;
             WriteTime += timer.Elapsed;
         }
         Segments[segment].Parts.Add(part);
@@ -108,19 +107,34 @@ public class SegmentedFile : IDisposable
 
     public unsafe int ReadSegment(int segment, int part, uint[] buffer)
     {
+        fixed (uint* ptr = buffer)
+        {
+            int bytesRead = ReadSegment(segment, part, (byte*)ptr);
+            if (bytesRead % 4 != 0) throw new Exception($"Bytes read = {bytesRead} but should be multiple of 4");
+            return bytesRead / 4;
+        }
+    }
+
+    public unsafe int ReadSegment(int segment, int part, byte[] buffer)
+    {
+        fixed (byte* ptr = buffer)
+        {
+            return ReadSegment(segment, part, ptr);
+        }
+    }
+
+    public unsafe int ReadSegment(int segment, int part, byte* buffer)
+    {
         var stream = Streams[segment % Streams.Length];
         var segmentPart = Segments[segment].Parts[part];
         lock (stream)
         {
             var timer = Stopwatch.StartNew();
             stream.Seek(segmentPart.Offset, SeekOrigin.Begin);
-            fixed (uint* bufPtr = buffer)
-            {
-                var span = new Span<byte>((byte*)(bufPtr), segmentPart.Length * 4);
-                int read = stream.Read(span);
-                if (read != segmentPart.Length * 4) throw new Exception($"Error: read={read} exp={span.Length}");
-            }
-            BytesRead += segmentPart.Length * 4;
+            var span = new Span<byte>(buffer, segmentPart.Length);
+            int read = stream.Read(span);
+            if (read != segmentPart.Length) throw new Exception($"Error: read={read} exp={span.Length}");
+            BytesRead += segmentPart.Length;
             ReadTime += timer.Elapsed;
         }
         return segmentPart.Length;

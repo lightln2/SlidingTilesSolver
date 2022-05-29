@@ -9,7 +9,7 @@ using System.Diagnostics;
 public unsafe class GpuSolver
 {
     const int OFFSET_ZERO = 15;
-    public const int GPUSIZE = 64_000_000;
+    public const int GPUSIZE = 48_000_000;
 
 
     public struct PuzzleParams
@@ -241,6 +241,21 @@ public unsafe class GpuSolver
     public static void CalcGPU_Up(int count, long[] indexes)
     {
         if (count == 0) return;
+        lock (context)
+        {
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            life_kernel_up(count, pparams, dev.View);
+            accelerator.Synchronize();
+            dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+            GpuExecTime += sw.Elapsed;
+        }
+    }
+
+    public static void CalcGPU_Up(int count, long* indexes)
+    {
+        if (count == 0) return;
         lock(context)
         {
             ProcessedValues += count;
@@ -254,6 +269,21 @@ public unsafe class GpuSolver
     }
 
     public static void CalcGPU_Down(int count, long[] indexes)
+    {
+        if (count == 0) return;
+        lock (context)
+        {
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            life_kernel_dn(count, pparams, dev.View);
+            accelerator.Synchronize();
+            dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+            GpuExecTime += sw.Elapsed;
+        }
+    }
+
+    public static void CalcGPU_Down(int count, long* indexes)
     {
         if (count == 0) return;
         lock (context)

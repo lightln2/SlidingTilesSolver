@@ -9,25 +9,23 @@ using System.Threading.Tasks;
 
 public class PuzzleSolver
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static unsafe long[] Solve(int width, int height, int initialIndex)
+    {
+        var info = new PuzzleInfo(width, height, initialIndex);
+        return Solve(info);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static unsafe long[] Solve(PuzzleInfo info)
     {
         var totalTime = Stopwatch.StartNew();
 
-        var info = new PuzzleInfo(width, height, initialIndex);
-        GpuSolver.Initialize(width, height);
+        GpuSolver.Initialize(info.Width, info.Height);
         Console.WriteLine(info);
         var results = new List<long>();
 
         var frontier = new Frontier(info, "c:/PUZ/frontier.1-p1", "d:/PUZ/frontier.1-p2");
         var newFrontier = new Frontier(info, "d:/PUZ/frontier.2-p1", "c:/PUZ/frontier.2-p2");
-
-        uint[] valsBuffer = new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE];
-        byte[] statesBuffer = new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE];
-        // Fill initial state
-        valsBuffer[0] = (uint)(initialIndex);
-        statesBuffer[0] = (byte)(info.GetState(initialIndex));
-        frontier.Write(0, valsBuffer, statesBuffer, 1);
 
         using var semiFrontierUp = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier.up-p1", "d:/PUZ/semifrontier.up-p2");
         using var semiFrontierDown = new SegmentedFile(info.SegmentsCount, "d:/PUZ/semifrontier.dn-p1", "c:/PUZ/semifrontier.dn-p2");
@@ -48,11 +46,16 @@ public class PuzzleSolver
         };
         List<byte[]> tempBuffersList = new List<byte[]>()
         {
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 5],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 5],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 5],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 5],
+            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
+            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
+            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
+            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
         };
+
+        // Fill initial state
+        valsBuffersList[0][0] = (uint)info.InitialIndex;
+        statesBuffersList[0][0] = info.GetState(info.InitialIndex);
+        frontier.Write(0, tempBuffersList[0], valsBuffersList[0], statesBuffersList[0], 1);
 
         TimeSpan TimerFillSemifrontier = TimeSpan.Zero;
         TimeSpan TimerAddUpDown = TimeSpan.Zero;
@@ -65,26 +68,28 @@ public class PuzzleSolver
         results.Add(1);
         long countSoFar = 1;
 
-        //var states = new FrontierStates(info);
         var statesList = new List<FrontierStates>() 
         { 
             new FrontierStates(info),
             new FrontierStates(info),
             new FrontierStates(info),
+            new FrontierStates(info),
         };
+
         info.Arena.Reset();
+
         var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
         var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
 
         var upDownCollectors = new UpDownCollector[]
         {
-            new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(semifrontierCollectorUp, semifrontierCollectorDown),
+            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
+            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
+            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
+            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
         };
 
-        for (int step = 1; step <= PuzzleInfo.MaxSteps; step++)
+        for (int step = 1; step <= info.MaxSteps; step++)
         {
             sw.Restart();
             timer.Restart();
@@ -260,7 +265,6 @@ public class PuzzleSolver
         Console.WriteLine($"Timer.AddUpDown={TimerAddUpDown}");
         Console.WriteLine($"Timer.AddLeftRight={TimerAddLeftRight}");
         Console.WriteLine($"Timer.FrontierCollector.Collect={TimerCollect}");
-        SegmentedFileByte.PrintStats();
         Frontier.PrintStats();
         FrontierStates.PrintStats();
         PackStates.PrintStats();

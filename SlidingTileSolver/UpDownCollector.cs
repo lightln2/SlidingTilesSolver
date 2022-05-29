@@ -6,44 +6,26 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public class UpDownCollector
+public unsafe class UpDownCollector
 {
     public readonly SemifrontierCollector SemifrontierCollectorUp;
     public readonly SemifrontierCollector SemifrontierCollectorDown;
-    private readonly long[] UpBuffer = new long[GpuSolver.GPUSIZE];
+    private const int BufferLength = GpuSolver.GPUSIZE;
+    private readonly long* UpBuffer;
     private int UpCount;
-    private readonly long[] DnBuffer = new long[GpuSolver.GPUSIZE];
+    private readonly long* DnBuffer;
     private int DnCount;
 
     private static TimeSpan TimeCollect = TimeSpan.Zero;
     private static TimeSpan TimeClose = TimeSpan.Zero;
     private Stopwatch Timer = new Stopwatch();
 
-    public UpDownCollector(SemifrontierCollector semifrontierCollectorUp, SemifrontierCollector semifrontierCollectorDown)
+    public UpDownCollector(PuzzleInfo info, SemifrontierCollector semifrontierCollectorUp, SemifrontierCollector semifrontierCollectorDown)
     {
         SemifrontierCollectorUp = semifrontierCollectorUp;
         SemifrontierCollectorDown = semifrontierCollectorDown;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Collect(int segment, long[] buffer, int len)
-    {
-        Timer.Restart();
-        long baseIndex = ((long)segment << PuzzleInfo.SEGMENT_SIZE_POW) << 4;
-        for (int i = 0; i < len; i++)
-        {
-            long val = baseIndex | buffer[i];
-
-            if ((val & PuzzleInfo.STATE_UP) != 0)
-            {
-                AddUp(val >> 4);
-            }
-            if ((val & PuzzleInfo.STATE_DN) != 0)
-            {
-                AddDn(val >> 4);
-            }
-        }
-        TimeCollect += Timer.Elapsed;
+        UpBuffer = info.Arena.Alloclong(BufferLength);
+        DnBuffer = info.Arena.Alloclong(BufferLength);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -72,7 +54,7 @@ public class UpDownCollector
     private void AddUp(long value)
     {
         UpBuffer[UpCount++] = value;
-        if (UpCount == UpBuffer.Length)
+        if (UpCount == BufferLength)
         {
             FlushUp();
         }
@@ -82,7 +64,7 @@ public class UpDownCollector
     private void AddDn(long value)
     {
         DnBuffer[DnCount++] = value;
-        if (DnCount == DnBuffer.Length)
+        if (DnCount == BufferLength)
         {
             FlushDn();
         }
