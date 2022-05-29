@@ -33,41 +33,21 @@ public unsafe class UpDownCollector
     {
         Timer.Restart();
         long baseIndex = ((long)segment << PuzzleInfo.SEGMENT_SIZE_POW);
-        for (int i = 0; i < len; i++)
+        fixed(byte* statesPtr = states)
         {
-            long val = baseIndex | vals[i];
-            byte state = states[i];
-
-            if ((state & PuzzleInfo.STATE_UP) != 0)
+            for (int i = 0; i < len; i++)
             {
-                AddUp(val);
-            }
-            if ((state & PuzzleInfo.STATE_DN) != 0)
-            {
-                AddDn(val);
+                long val = baseIndex | vals[i];
+                byte state = states[i];
+                UpBuffer[UpCount] = val;
+                UpCount += (state & PuzzleInfo.STATE_UP);
+                if (UpCount == BufferLength) FlushUp();
+                DnBuffer[DnCount] = val;
+                DnCount += ((state & PuzzleInfo.STATE_DN) >> 1);
+                if (DnCount == BufferLength) FlushDn();
             }
         }
         TimeCollect += Timer.Elapsed;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private void AddUp(long value)
-    {
-        UpBuffer[UpCount++] = value;
-        if (UpCount == BufferLength)
-        {
-            FlushUp();
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private void AddDn(long value)
-    {
-        DnBuffer[DnCount++] = value;
-        if (DnCount == BufferLength)
-        {
-            FlushDn();
-        }
     }
 
     private void FlushUp()

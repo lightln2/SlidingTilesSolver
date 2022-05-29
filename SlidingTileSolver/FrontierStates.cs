@@ -100,28 +100,14 @@ public unsafe class FrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddLeftRight(long[] buffer, int len)
-    {
-        for (int i = 0; i < len; i++)
-        {
-            long val = buffer[i] & BaseIndexLeftRightMask;
-            StatesMap[val >> (STATES_MAP_SKIP_POW + 4)] = 1;
-            States[val >> 8] |= LeftRightMap[val & 255];
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AddLeftRight(uint[] vals, byte[] states, int len)
     {
         for (int i = 0; i < len; i++)
         {
             byte mapIndex = (byte)((vals[i] << 4) | states[i]);
             ulong x = LeftRightMap[mapIndex];
-            if (x > 0)
-            {
-                StatesMap[vals[i] >> STATES_MAP_SKIP_POW] = 1;
-                States[vals[i] >> 4] |= x;
-            }
+            StatesMap[vals[i] >> STATES_MAP_SKIP_POW] |= (byte)BitOperations.PopCount(x);
+            States[vals[i] >> 4] |= x;
         }
     }
 
@@ -164,10 +150,22 @@ public unsafe class FrontierStates
             {
                 ulong val = States[i];
                 if (val == 0) continue;
-                long baseIndex = i << 8;
+                //long baseIndex = i << 8;
+                uint baseIndex = (uint)(i << 4);
 
                 while (val != 0)
                 {
+                    int bit = BitOperations.TrailingZeroCount(val);
+                    int j = (bit >> 2);
+                    int off = j << 2;
+                    byte state = (byte)(((val >> off) & 0xF) | Bounds[j]);
+                    count++;
+
+                    collector.Add(baseIndex | (uint)j, (byte)(~state & 15));
+
+                    val &= ~(0xFUL << off);
+
+                    /*
                     int bit = BitOperations.TrailingZeroCount(val);
                     int j = (bit >> 3);
                     int byteIndex = (j << 3);
@@ -179,6 +177,7 @@ public unsafe class FrontierStates
                     if (b1 != 0) collector.Add(baseIndex | b1);
                     if (b2 != 0) collector.Add(baseIndex | b2);
                     val &= ~(0xFFUL << byteIndex);
+                    */
                 }
                 States[i] = 0;
             }

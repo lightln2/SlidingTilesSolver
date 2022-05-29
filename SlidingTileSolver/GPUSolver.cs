@@ -103,7 +103,7 @@ public unsafe class GpuSolver
 
     public static void PrintStats()
     {
-        Console.WriteLine($"GPUSolver: Items={ProcessedValues}, time={GpuExecTime}");
+        Console.WriteLine($"GPUSolver: Items={ProcessedValues:N0}, time={GpuExecTime}");
     }
 
     private static void Copy(byte[] src, byte[] dst)

@@ -11,7 +11,7 @@ public class Frontier : IDisposable
     private static TimeSpan TimeWrite = TimeSpan.Zero;
     private static TimeSpan TimeRead = TimeSpan.Zero;
 
-    private readonly SegmentedFile File;
+    private SegmentedFile File;
     private Stopwatch Timer = new Stopwatch();
 
     public readonly long[] Buffer = new long[1024 * 1024];
@@ -25,6 +25,11 @@ public class Frontier : IDisposable
     public Frontier(PuzzleInfo info, params string[] files)
     {
         File = new SegmentedFile(info.SegmentsCount, files);
+    }
+
+    public void Swap(Frontier other)
+    {
+        Util.Swap(ref File, ref other.File);
     }
 
     public int SegmentsCount => File.SegmentsCount;

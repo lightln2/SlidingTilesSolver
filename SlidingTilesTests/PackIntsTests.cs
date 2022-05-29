@@ -1,10 +1,30 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 [TestClass]
 public class PackIntsTests
 {
+    void Test(uint[] arr)
+    {
+        int size = arr.Length;
+        var exp = arr.ToArray();
+        var buffer = new byte[10 + arr.Length * 5];
+        var sw = Stopwatch.StartNew();
+        int bytesLen = PackInts.Pack(arr, size, buffer, 9);
+        Console.WriteLine($"Pack: {sw.Elapsed}");
+        Console.WriteLine($"{size} -> {bytesLen}");
+        sw.Restart();
+        int len = PackInts.Unpack(buffer, 9, bytesLen, arr);
+        Console.WriteLine($"Unpack: {sw.Elapsed}");
+        Assert.AreEqual(size, len);
+        for (uint i = 0; i < size; i++)
+        {
+            if (arr[i] != exp[i]) Assert.Fail($"at {i}: exp={exp[i]} was={arr[i]}");
+        }
+    }
+
     void Test(int size, Func<uint, uint> F)
     {
         var arr = new uint[size];
@@ -22,6 +42,15 @@ public class PackIntsTests
         {
             if (arr[i] != F(i)) Assert.Fail($"at {i}: exp={F(i)} was={arr[i]}");
         }
+    }
+
+    [TestMethod]
+    public void Test_0_Different()
+    {
+        Test(new uint[] { 
+            0x567803, 0x05, 0x77991222, 0x5667, 0x6674, 0xEA, 0xFFEEDDCC, 0xCDCDC0,
+            0x7803, 0x05, 0x77991222, 0x566789, 0x1, 0x03000F, 0xFFEEDDCC, 0xCDC6,
+        });
     }
 
     [TestMethod]

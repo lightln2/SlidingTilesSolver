@@ -21,4 +21,11 @@ public class Util
     {
         return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
     }
+
+    public static void Swap<T>(ref T x, ref T y)
+    {
+        T temp = x;
+        x = y;
+        y = temp;
+    }
 }

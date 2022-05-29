@@ -8,16 +8,15 @@ using System.Threading.Tasks;
 public class FrontierCollector
 {
     public readonly Frontier Frontier;
-    public readonly int Segment;
+    public int Segment { get; set; } = -1;
     private readonly byte[] TempBuffer;
     private readonly uint[] Vals;
     private readonly byte[] States;
     private int BufferPosition;
 
-    public FrontierCollector(Frontier frontier, int segment, byte[] tempBuffer, uint[] vals, byte[] states)
+    public FrontierCollector(Frontier frontier, byte[] tempBuffer, uint[] vals, byte[] states)
     {
         Frontier = frontier;
-        Segment = segment;
         TempBuffer = tempBuffer;
         Vals = vals;
         States = states;
@@ -30,6 +29,19 @@ public class FrontierCollector
         Vals[BufferPosition] = (uint)(value >> 4);
         States[BufferPosition] = (byte)(value & 15);
         BufferPosition++;
+        if (BufferPosition == Vals.Length)
+        {
+            Flush();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Add(uint val, byte state)
+    {
+        Vals[BufferPosition] = val;
+        States[BufferPosition] = state;
+        //BufferPosition++;
+        BufferPosition += (state == 0) ? 0 : 1;
         if (BufferPosition == Vals.Length)
         {
             Flush();
