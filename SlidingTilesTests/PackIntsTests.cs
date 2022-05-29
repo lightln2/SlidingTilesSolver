@@ -10,13 +10,15 @@ public class PackIntsTests
     {
         int size = arr.Length;
         var exp = arr.ToArray();
+        for (int i = 1; i < arr.Length; i++) arr[i] += arr[i - 1];
         var buffer = new byte[10 + arr.Length * 5];
         var sw = Stopwatch.StartNew();
-        int bytesLen = PackInts.Pack(arr, size, buffer, 9);
+        int bytesLen = PackInts.PackDiff(arr, size, buffer, 9);
         Console.WriteLine($"Pack: {sw.Elapsed}");
         Console.WriteLine($"{size} -> {bytesLen}");
         sw.Restart();
-        int len = PackInts.Unpack(buffer, 9, bytesLen, arr);
+        int len = PackInts.UnpackDiff(buffer, 9, bytesLen, arr);
+        for (int i = arr.Length - 1; i >= 1; i--) arr[i] -= arr[i - 1];
         Console.WriteLine($"Unpack: {sw.Elapsed}");
         Assert.AreEqual(size, len);
         for (uint i = 0; i < size; i++)
@@ -29,13 +31,15 @@ public class PackIntsTests
     {
         var arr = new uint[size];
         for (uint i = 0; i < size; i++) arr[i] = F(i);
+        for (int i = 1; i < arr.Length; i++) arr[i] += arr[i - 1];
         var buffer = new byte[10 + arr.Length * 5];
         var sw = Stopwatch.StartNew();
-        int bytesLen = PackInts.Pack(arr, size, buffer, 9);
+        int bytesLen = PackInts.PackDiff(arr, size, buffer, 9);
         Console.WriteLine($"Pack: {sw.Elapsed}");
         Console.WriteLine($"{size} -> {bytesLen}");
         sw.Restart();
-        int len = PackInts.Unpack(buffer, 9, bytesLen, arr);
+        int len = PackInts.UnpackDiff(buffer, 9, bytesLen, arr);
+        for (int i = arr.Length - 1; i >= 1; i--) arr[i] -= arr[i - 1];
         Console.WriteLine($"Unpack: {sw.Elapsed}");
         Assert.AreEqual(size, len);
         for (uint i = 0; i < size; i++)

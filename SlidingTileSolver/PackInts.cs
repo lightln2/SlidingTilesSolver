@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +14,15 @@ public class PackInts
     private static TimeSpan TimeUnpack = TimeSpan.Zero;
     private static Stopwatch Timer = new Stopwatch();
 
+
+    private static int[] Counts;
+    private static Vector128<byte> Vals;
+
+    static PackInts()
+    {
+
+    }
+
     public static int BytesCntMinusOne(uint val)
     {
         if (val == 0) return 0;
@@ -20,11 +30,12 @@ public class PackInts
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe static int Pack(uint[] arr, int count, byte[] buffer, int offset)
+    public unsafe static int PackDiff(uint[] arr, int count, byte[] buffer, int offset)
     {
         if ((count & 15) != 0) throw new Exception("Count should be divisible by 16");
         Timer.Restart();
         int pos = offset;
+        uint last = 0;
         fixed (uint* src = arr)
         {
             fixed (byte* dst = buffer)
@@ -32,6 +43,12 @@ public class PackInts
                 for (int i = 0; i < count; i += 4)
                 {
                     uint x = src[i], y = src[i + 1], z = src[i + 2], t = src[i + 3];
+                    uint newLast = t;
+                    t -= z;
+                    z -= y;
+                    y -= x;
+                    x -= last;
+                    last = newLast;
                     int sx = BytesCntMinusOne(x);
                     int sy = BytesCntMinusOne(y);
                     int sz = BytesCntMinusOne(z);
@@ -57,13 +74,13 @@ public class PackInts
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe static int Unpack(byte[] buffer, int offset, int length, uint[] arr)
+    public unsafe static int UnpackDiff(byte[] buffer, int offset, int length, uint[] arr)
     {
         Timer.Restart();
         if (length == 0) return 0;
         int pos = offset;
         int count = 0;
-
+        uint last = 0;
         fixed (byte* src = buffer)
         {
             fixed (uint* dst = arr)
@@ -87,10 +104,10 @@ public class PackInts
                     pos += sz;
                     uint t = *(uint*)(src + pos) & maskt;
                     pos += st;
-                    dst[count++] = x;
-                    dst[count++] = y;
-                    dst[count++] = z;
-                    dst[count++] = t;
+                    last = dst[count++] = last + x;
+                    last = dst[count++] = last + y;
+                    last = dst[count++] = last + z;
+                    last = dst[count++] = last + t;
                 }
             }
         }
