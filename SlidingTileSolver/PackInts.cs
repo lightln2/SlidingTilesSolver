@@ -5,10 +5,11 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 
-public class PackInts
+public unsafe class PackInts
 {
     private static TimeSpan TimePack = TimeSpan.Zero;
     private static TimeSpan TimeUnpack = TimeSpan.Zero;
@@ -16,10 +17,39 @@ public class PackInts
 
 
     private static int[] Counts;
-    private static Vector128<byte> Vals;
+    private static Vector128<byte>[] UnpackMask;
 
     static PackInts()
     {
+        Counts = new int[256];
+        UnpackMask = new Vector128<byte>[256];
+
+        byte[] data = new byte[16];
+        fixed (byte* dataPtr = data)
+        {
+            for (int state = 0; state < 256; state++)
+            {
+                int sx = 1 + (state & 3);
+                int sy = 1 + ((state >> 2) & 3);
+                int sz = 1 + ((state >> 4) & 3);
+                int st = 1 + ((state >> 6) & 3);
+
+                byte srcPos = 0;
+                int dstPos = 0;
+                for (int i = 0; i < sx; i++) data[dstPos++] = srcPos++;
+                for (int i = sx; i < 4; i++) data[dstPos++] = 255;
+                for (int i = 0; i < sy; i++) data[dstPos++] = srcPos++;
+                for (int i = sy; i < 4; i++) data[dstPos++] = 255;
+                for (int i = 0; i < sz; i++) data[dstPos++] = srcPos++;
+                for (int i = sz; i < 4; i++) data[dstPos++] = 255;
+                for (int i = 0; i < st; i++) data[dstPos++] = srcPos++;
+                for (int i = st; i < 4; i++) data[dstPos++] = 255;
+                UnpackMask[state] = Avx2.LoadVector128(dataPtr);
+
+                Counts[state] = sx + sy + sz + st;
+                if (srcPos != Counts[state]) throw new Exception("AAA");
+            }
+        }
 
     }
 
@@ -88,26 +118,14 @@ public class PackInts
                 while (pos < offset + length)
                 {
                     byte state = src[pos++];
-                    int sx = 1 + (state & 3);
-                    int sy = 1 + ((state >> 2) & 3);
-                    int sz = 1 + ((state >> 4) & 3);
-                    int st = 1 + ((state >> 6) & 3);
-                    uint maskx = (uint)((1ul << (sx * 8)) - 1);
-                    uint masky = (uint)((1ul << (sy * 8)) - 1);
-                    uint maskz = (uint)((1ul << (sz * 8)) - 1);
-                    uint maskt = (uint)((1ul << (st * 8)) - 1);
-                    uint x = *(uint*)(src + pos) & maskx;
-                    pos += sx;
-                    uint y = *(uint*)(src + pos) & masky;
-                    pos += sy;
-                    uint z = *(uint*)(src + pos) & maskz;
-                    pos += sz;
-                    uint t = *(uint*)(src + pos) & maskt;
-                    pos += st;
-                    last = dst[count++] = last + x;
-                    last = dst[count++] = last + y;
-                    last = dst[count++] = last + z;
-                    last = dst[count++] = last + t;
+                    Vector128<byte> v = Avx2.LoadVector128(src + pos);
+                    pos += Counts[state];
+                    Vector128<byte> unpacked = Avx2.Shuffle(v, UnpackMask[state]);
+                    Avx2.Store((byte*)(dst + count), unpacked);
+                    last = (dst[count++] += last);
+                    last = (dst[count++] += last);
+                    last = (dst[count++] += last);
+                    last = (dst[count++] += last);
                 }
             }
         }
