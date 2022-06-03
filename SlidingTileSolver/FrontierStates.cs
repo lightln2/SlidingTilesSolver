@@ -22,9 +22,6 @@ public unsafe class FrontierStates
     private ulong[] LeftRightMap;
 
     private byte[] Bounds;
-    private byte[] CollectCounts;
-    private byte[] CollectMap1;
-    private byte[] CollectMap2;
 
     private Stopwatch Timer = new Stopwatch();
     
@@ -51,45 +48,6 @@ public unsafe class FrontierStates
             if ((state & PuzzleInfo.STATE_LT) != 0) x |= (ulong)(PuzzleInfo.STATE_RT) << ((index - 1) * 4);
             if ((state & PuzzleInfo.STATE_RT) != 0) x |= (ulong)(PuzzleInfo.STATE_LT) << ((index + 1) * 4);
             LeftRightMap[b] = x;
-        }
-
-        CollectCounts = new byte[256];
-        CollectMap1 = new byte[8 * 256];
-        CollectMap2 = new byte[8 * 256];
-
-        for (int s = 0; s < 256; s++)
-        {
-            byte s1 = (byte)(s & 15);
-            byte s2 = (byte)((s >> 4) & 15);
-            byte count = 0;
-            if (s1 != 0) count++;
-            if (s2 != 0) count++;
-            CollectCounts[s] = count;
-        }
-
-        for (int j = 0; j < 8; j++)
-        {
-            for (int s = 0; s < 256; s++)
-            {
-                byte s1 = (byte)(s & 15);
-                byte s2 = (byte)((s >> 4) & 15);
-                if (s1 != 0)
-                {
-                    s1 |= Bounds[(2 * j) & 15];
-                    if (s1 != 15)
-                    {
-                        CollectMap1[(j << 8) + s] = (byte)(((2 * j) << 4) | (byte)(~s1 & 0xF));
-                    }
-                }
-                if (s2 != 0)
-                {
-                    s2 |= Bounds[(2 * j + 1) & 15];
-                    if (s2 != 15)
-                    {
-                        CollectMap2[(j << 8) + s] = (byte)(((2 * j + 1) << 4) | (byte)(~s2 & 0xF));
-                    }
-                }
-            }
         }
 
     }
@@ -150,7 +108,6 @@ public unsafe class FrontierStates
             {
                 ulong val = States[i];
                 if (val == 0) continue;
-                //long baseIndex = i << 8;
                 uint baseIndex = (uint)(i << 4);
 
                 while (val != 0)
@@ -164,20 +121,6 @@ public unsafe class FrontierStates
                     collector.Add(baseIndex | (uint)j, (byte)(~state & 15));
 
                     val &= ~(0xFUL << off);
-
-                    /*
-                    int bit = BitOperations.TrailingZeroCount(val);
-                    int j = (bit >> 3);
-                    int byteIndex = (j << 3);
-                    byte s = (byte)(val >> byteIndex);
-                    count += CollectCounts[s];
-                    int mapIndex = (j << 8) | s;
-                    byte b1 = CollectMap1[mapIndex];
-                    byte b2 = CollectMap2[mapIndex];
-                    if (b1 != 0) collector.Add(baseIndex | b1);
-                    if (b2 != 0) collector.Add(baseIndex | b2);
-                    val &= ~(0xFFUL << byteIndex);
-                    */
                 }
                 States[i] = 0;
             }
