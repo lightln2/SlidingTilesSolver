@@ -9,10 +9,9 @@ using System.Threading.Tasks;
 
 public unsafe class FrontierStates
 {
-    public static long BaseIndexUpDownMask = (1L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
-    public static long BaseIndexLeftRightMask = (16L << PuzzleInfo.SEGMENT_SIZE_POW) - 1;
-    private static TimeSpan TimeCollect = TimeSpan.Zero;
     const int STATES_MAP_SKIP_POW = 12;
+
+    private static TimeSpan TimeCollect = TimeSpan.Zero;
 
     private readonly long StatesMapLength;
 
