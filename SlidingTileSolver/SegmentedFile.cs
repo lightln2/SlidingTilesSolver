@@ -14,6 +14,8 @@ public struct FilePart
 
 public unsafe class SegmentedFile : IDisposable
 {
+    public static bool DELETE_ON_CLEAR = true;
+
     class Segment
     {
         public readonly List<FilePart> Parts = new List<FilePart>();
@@ -24,21 +26,15 @@ public unsafe class SegmentedFile : IDisposable
     private static long BytesWritten;
     private static long BytesRead;
 
-    private readonly FileStream[] Streams;
+    private string[] FileNames;
+    private FileStream[] Streams;
     private readonly Segment[] Segments;
 
-    public SegmentedFile(string fileName, int segmentsCount)
-    {
-        Streams = new FileStream[] { Util.OpenFile(fileName) };
-        Segments = new Segment[segmentsCount];
-        for (int i = 0; i < Segments.Length; i++)
-        {
-            Segments[i] = new Segment();
-        }
-    }
+    public SegmentedFile(string fileName, int segmentsCount) : this(segmentsCount, new string[] { fileName }) { }
 
     public SegmentedFile(int segmentsCount, params string[] fileNames)
     {
+        FileNames = fileNames;
         Streams = fileNames.Select(f => Util.OpenFile(f)).ToArray();
         Segments = new Segment[segmentsCount];
         for (int i = 0; i < Segments.Length; i++)
@@ -55,7 +51,16 @@ public unsafe class SegmentedFile : IDisposable
         {
             Segments[i].Parts.Clear();
         }
-        foreach (var stream in Streams) stream.Position = 0;
+        if (DELETE_ON_CLEAR)
+        {
+            foreach (var stream in Streams) stream.Dispose();
+            foreach (var fileName in FileNames) File.Delete(fileName);
+            Streams = FileNames.Select(f => Util.OpenFile(f)).ToArray();
+        }
+        else
+        {
+            foreach (var stream in Streams) stream.Position = 0;
+        }
     }
 
     public unsafe void WriteSegment(int segment, uint[] buffer, long offset, int length)
