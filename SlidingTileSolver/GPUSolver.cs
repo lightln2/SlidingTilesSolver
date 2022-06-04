@@ -58,7 +58,7 @@ public unsafe class GpuSolver
         PuzzleParams p,
         ArrayView<long> input)
     {
-        input[index] = VerticalMoves(ref p, input[index], 1);
+        input[index] = VerticalMoveUp(ref p, input[index]);
     }
 
     static void LifeKernelDn(
@@ -66,7 +66,7 @@ public unsafe class GpuSolver
         PuzzleParams p,
         ArrayView<long> input)
     {
-        input[index] = VerticalMoves(ref p, input[index], 0);
+        input[index] = VerticalMoveDown(ref p, input[index]);
     }
 
     public static void CompileKernel()
@@ -218,22 +218,25 @@ public unsafe class GpuSolver
         arr[OFFSET_ZERO] += (byte)p.Width;
     }
 
-    public static long VerticalMoves(ref PuzzleParams p, long index, int isUp)
+    public static long VerticalMoveUp(ref PuzzleParams p, long index)
     {
         byte[] arr = new byte[16];
         FromIndex(ref p, index, arr);
         Unpack(ref p, arr);
+        if (!CanRotateUp(ref p, arr)) return -1;
+        RotateUp(ref p, arr);
+        Pack(ref p, arr);
+        return GetIndex(ref p, arr);
+    }
 
-        if (isUp == 1)
-        {
-            if (!CanRotateUp(ref p, arr)) return -1;
-            RotateUp(ref p, arr);
-        }
-        else
-        {
-            if (!CanRotateDn(ref p, arr)) return -1;
-            RotateDn(ref p, arr);
-        }
+
+    public static long VerticalMoveDown(ref PuzzleParams p, long index)
+    {
+        byte[] arr = new byte[16];
+        FromIndex(ref p, index, arr);
+        Unpack(ref p, arr);
+        if (!CanRotateDn(ref p, arr)) return -1;
+        RotateDn(ref p, arr);
         Pack(ref p, arr);
         return GetIndex(ref p, arr);
     }
@@ -282,6 +285,35 @@ public unsafe class GpuSolver
             dev.AsContiguous().CopyToCPU(ref indexes[0], count);
             GpuExecTime += sw.Elapsed;
         }
+    }
+
+    public static void CalcGPU_Multislide(int count, long[] indexes, int row, int height)
+    {
+        fixed (long* ptr = indexes)
+        {
+            CalcGPU_Multislide(count, ptr, row, height);
+        }
+    }
+
+    public static void CalcGPU_Multislide(int count, long* indexes, int row, int height)
+    {
+        if (count == 0) return;
+        if (height == 2)
+        {
+            if (row == 0)
+                CalcGPU_Down(count, indexes);
+            else
+                CalcGPU_Up(count, indexes);
+        }
+        else if (height == 3)
+        {
+            if (row == 0)
+            {
+
+            }
+            throw new Exception($"height={height} is not supported");
+        }
+        else throw new Exception($"height={height} is not supported");
     }
 
 }

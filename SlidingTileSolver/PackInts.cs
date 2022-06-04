@@ -47,7 +47,7 @@ public unsafe class PackInts
                 UnpackMask[state] = Avx2.LoadVector128(dataPtr);
 
                 Counts[state] = sx + sy + sz + st;
-                if (srcPos != Counts[state]) throw new Exception("AAA");
+                if (srcPos != Counts[state]) throw new Exception("wrong srcPos");
             }
         }
 
