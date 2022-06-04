@@ -5,8 +5,10 @@ class Program
 {
     static void Main(string[] args)
     {
-        var info = new PuzzleInfo(4, 3, 0);
-        //info.MaxSteps = 15;
+        PuzzleInfo.SetSemifrontierBufferPow(17);
+        PuzzleInfo.THREADS = 3;
+        var info = new PuzzleInfo(4, 4, 0);
+        info.MaxSteps = 30;
         PuzzleSolver.Solve(info);
     }
 }
