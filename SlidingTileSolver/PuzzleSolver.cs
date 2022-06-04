@@ -30,35 +30,18 @@ public class PuzzleSolver
         using var semiFrontierUp = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier.up-p1", "d:/PUZ/semifrontier.up-p2");
         using var semiFrontierDown = new SegmentedFile(info.SegmentsCount, "d:/PUZ/semifrontier.dn-p1", "c:/PUZ/semifrontier.dn-p2");
 
-        List<uint[]> valsBuffersList = new List<uint[]>()
-        {
-            new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-        };
-        List<byte[]> statesBuffersList = new List<byte[]>()
-        {
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE],
-        };
-        List<byte[]> tempBuffersList = new List<byte[]>()
-        {
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
-            new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4],
-        };
+        List<uint[]> valsBuffersList = new List<uint[]>();
+        List<byte[]> statesBuffersList = new List<byte[]>();
+        List<byte[]> tempBuffersList = new List<byte[]>();
+        List<FrontierCollector> frontierCollectorsList = new List<FrontierCollector>();
 
-        List<FrontierCollector> frontierCollectorsList = new List<FrontierCollector>()
+        for (int i = 0; i < PuzzleInfo.THREADS; i++)
         {
-            new FrontierCollector(newFrontier, tempBuffersList[0], valsBuffersList[0], statesBuffersList[0]),
-            new FrontierCollector(newFrontier, tempBuffersList[1], valsBuffersList[1], statesBuffersList[1]),
-            new FrontierCollector(newFrontier, tempBuffersList[2], valsBuffersList[2], statesBuffersList[2]),
-            new FrontierCollector(newFrontier, tempBuffersList[3], valsBuffersList[3], statesBuffersList[3]),
-        };
+            valsBuffersList.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
+            statesBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
+            tempBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
+            frontierCollectorsList.Add(new FrontierCollector(newFrontier, tempBuffersList[i], valsBuffersList[i], statesBuffersList[i]));
+        }
 
         // Fill initial state
         valsBuffersList[0][0] = (uint)info.InitialIndex;
@@ -78,26 +61,23 @@ public class PuzzleSolver
         results.Add(1);
         long countSoFar = 1;
 
-        var statesList = new List<FrontierStates>() 
-        { 
-            new FrontierStates(info),
-            new FrontierStates(info),
-            new FrontierStates(info),
-            new FrontierStates(info),
-        };
+        var statesList = new List<FrontierStates>();
+        for (int i = 0; i < PuzzleInfo.THREADS; i++)
+        {
+            statesList.Add(new FrontierStates(info));
+        }
 
         info.Arena.Reset();
 
         var semifrontierCollectorUp = new SemifrontierCollector(semiFrontierUp, info);
         var semifrontierCollectorDown = new SemifrontierCollector(semiFrontierDown, info);
 
-        var upDownCollectors = new UpDownCollector[]
+        var upDownCollectors = new UpDownCollector[PuzzleInfo.THREADS];
+        for (int i = 0; i < PuzzleInfo.THREADS; i++)
         {
-            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
-            new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown),
-        };
+            var coll = new UpDownCollector(info, semifrontierCollectorUp, semifrontierCollectorDown);
+            upDownCollectors[i] = coll;
+        }
 
         for (int step = 1; step <= info.MaxSteps; step++)
         {
