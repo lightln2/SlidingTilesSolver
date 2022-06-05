@@ -43,7 +43,7 @@ public unsafe class FrontierStates
         {
             ulong x = 0;
             int index = b >> 4;
-            int state = b & 15;
+            int state = (b & 15) & (byte)~Bounds[index];
             if ((state & PuzzleInfo.STATE_LT) != 0) x |= (ulong)(PuzzleInfo.STATE_RT) << ((index - 1) * 4);
             if ((state & PuzzleInfo.STATE_RT) != 0) x |= (ulong)(PuzzleInfo.STATE_LT) << ((index + 1) * 4);
             LeftRightMap[b] = x;

@@ -11,7 +11,7 @@ public class PuzzleInfo
 
     public const int SEGMENT_SIZE_POW = 32;
 
-    public const int FRONTIER_BUFFER_SIZE = 1 * 1024 * 1024;
+    public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
 
     // 18 is 1MB = 1M / 4 uint's
     public static int SEMIFRONTIER_BUFFER_POW { get; private set; } = 18;
