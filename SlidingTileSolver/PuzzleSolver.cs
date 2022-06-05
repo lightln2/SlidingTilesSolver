@@ -30,9 +30,9 @@ public class PuzzleSolver
         using var semiFrontierUp = new SegmentedFile(info.SegmentsCount, "H:/PUZ/semifrontier.up.1", "H:/PUZ/semifrontier.up.2", "E:/PUZ/semifrontier.up.3", "F:/PUZ/semifrontier.up.4", "G:/PUZ/semifrontier.up.5");
         using var semiFrontierDown = new SegmentedFile(info.SegmentsCount, "F:/PUZ/semifrontier.dn.1", "E:/PUZ/semifrontier.dn.2", "H:/PUZ/semifrontier.dn.3", "G:/PUZ/semifrontier.dn.4", "H:/PUZ/semifrontier.dn.5");
         */
+
         using var frontier = new Frontier(info, "c:/PUZ/frontier.1");
         using var newFrontier = new Frontier(info, "d:/PUZ/frontier.2");
-
         using var semiFrontierUp = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier.up");
         using var semiFrontierDown = new SegmentedFile(info.SegmentsCount, "d:/PUZ/semifrontier.dn");
 
