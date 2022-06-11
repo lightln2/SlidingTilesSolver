@@ -21,6 +21,9 @@ public unsafe class MultislideFrontierStates
     private ulong[] MultislideLeftRightMap;
     private ulong[] ExcludeMap;
 
+    uint[] LastToExclude = new uint[32];
+    int LastToExcludeCount = 0;
+
     private Stopwatch Timer = new Stopwatch();
     
     public MultislideFrontierStates(PuzzleInfo info)
@@ -69,6 +72,31 @@ public unsafe class MultislideFrontierStates
     public void Reset()
     {
         for (int i = 0; i < StatesMapLength; i++) States[i] = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void AddLeftRightAndExclude(uint[] vals, int len)
+    {
+        if (len == 0) return;
+        AddLeftRight(vals, len);
+        FinishAddLeftRightAndExclude();
+        if (len >= 32) // not last chunk
+        {
+            Exclude(vals, len - 32);
+            Array.Copy(vals, len - 32, LastToExclude, 0, 32);
+            LastToExcludeCount = 32;
+        }
+        else
+        {
+            Exclude(vals, len);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void FinishAddLeftRightAndExclude()
+    {
+        Exclude(LastToExclude, LastToExcludeCount);
+        LastToExcludeCount = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]

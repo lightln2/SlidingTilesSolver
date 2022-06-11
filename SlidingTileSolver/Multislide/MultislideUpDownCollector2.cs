@@ -6,13 +6,12 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
+public unsafe class MultislideUpDownCollector2 : IMultislideUpDownCollector
 {
     private readonly PuzzleInfo Info;
     public readonly MultislideSemifrontierCollector SemifrontierCollector;
     private int BufferLength;
-    private long*[] UpBuffers;
-    private long*[] DnBuffers;
+    private long*[] Buffers;
     private int[] Counts;
 
     private int[] RowMap;
@@ -21,19 +20,15 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
     private static TimeSpan TimeClose = TimeSpan.Zero;
     private Stopwatch Timer = new Stopwatch();
 
-    public MultislideUpDownCollector(PuzzleInfo info, MultislideSemifrontierCollector semifrontierCollector)
+    public MultislideUpDownCollector2(PuzzleInfo info, MultislideSemifrontierCollector semifrontierCollector)
     {
         Info = info;
         SemifrontierCollector = semifrontierCollector;
-        UpBuffers = new long*[info.Height];
-        DnBuffers = new long*[info.Height];
-        Counts = new int[info.Height];
-        BufferLength = GpuSolver.GPUSIZE / info.Height;
-        for (int i = 0; i < info.Height; i++)
-        {
-            UpBuffers[i] = info.Arena.Alloclong(BufferLength);
-            DnBuffers[i] = info.Arena.Alloclong(BufferLength);
-        }
+        Buffers = new long*[2];
+        Counts = new int[2];
+        BufferLength = GpuSolver.GPUSIZE;
+        Buffers[0] = info.Arena.Alloclong(BufferLength);
+        Buffers[1] = info.Arena.Alloclong(BufferLength);
 
         RowMap = new int[16];
         for (int i = 0; i < 16; i++)
@@ -52,8 +47,7 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
         {
             long val = baseIndex | vals[i];
             int row = RowMap[vals[i] & 15];
-            UpBuffers[row][Counts[row]] = val;
-            DnBuffers[row][Counts[row]] = val;
+            Buffers[row][Counts[row]] = val;
             Counts[row]++;
             if (Counts[row] == BufferLength)
             {
@@ -66,28 +60,30 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
     private void Flush(int row)
     {
         if (Counts[row] == 0) return;
-        GpuSolver.CalcGPU_MultislideUp(Counts[row], UpBuffers[row], row, () => {
-            SemifrontierCollector.Collect(UpBuffers[row], Counts[row]);
-        });
-        GpuSolver.CalcGPU_MultislideDown(Counts[row], DnBuffers[row], Info.Height - row - 1, () => {
-            SemifrontierCollector.Collect(DnBuffers[row], Counts[row]);
-        });
+        if (row == 0)
+        {
+            GpuSolver.CalcGPU_Down(Counts[row], Buffers[row]);
+        }
+        else if (row == 1)
+        {
+            GpuSolver.CalcGPU_Up(Counts[row], Buffers[row]);
+        }
+        else throw new Exception($"row={row}, should be 0 or 1");
+        SemifrontierCollector.Collect(Buffers[row], Counts[row]);
         Counts[row] = 0;
     }
 
     public void Close()
     {
         Timer.Restart();
-        for (int i = 0; i < Info.Height; i++)
-        {
-            Flush(i);
-        }
+        Flush(0);
+        Flush(1);
         SemifrontierCollector.Close();
         TimeClose += Timer.Elapsed;
     }
 
     public static void PrintStats()
     {
-        Console.WriteLine($"MultislideUpDownCollector: collect={TimeCollect} close={TimeClose}");
+        Console.WriteLine($"MultislideUpDownCollector2: collect={TimeCollect} close={TimeClose}");
     }
 }

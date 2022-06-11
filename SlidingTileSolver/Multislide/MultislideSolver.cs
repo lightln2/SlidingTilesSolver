@@ -41,11 +41,9 @@ public class MultislideSolver
 
         var valsBuffersList = new List<uint[]>();
         var valsBuffersList2 = new List<uint[]>();
-        var valsBuffersList3 = new List<uint[]>();
-        var tempBuffersList = new List<byte[]>();
 
-        var valsBuffersListXX = new List<uint[]>();
-        var tempBuffersListXX = new List<byte[]>();
+        var tempBuffersList = new List<byte[]>();
+        var tempBuffersList2 = new List<byte[]>();
 
         var frontierCollectorsListUpDn = new List<MultislideFrontierCollector>();
         var frontierCollectorsListLtRt = new List<MultislideFrontierCollector>();
@@ -54,12 +52,10 @@ public class MultislideSolver
         {
             valsBuffersList.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             valsBuffersList2.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
-            valsBuffersList3.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             tempBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
-            valsBuffersListXX.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
-            tempBuffersListXX.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
+            tempBuffersList2.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
             frontierCollectorsListUpDn.Add(new MultislideFrontierCollector(newFrontierUpDn, tempBuffersList[i], valsBuffersList[i]));
-            frontierCollectorsListLtRt.Add(new MultislideFrontierCollector(newFrontierLtRt, tempBuffersListXX[i], valsBuffersListXX[i]));
+            frontierCollectorsListLtRt.Add(new MultislideFrontierCollector(newFrontierLtRt, tempBuffersList2[i], valsBuffersList2[i]));
         }
 
         // Fill initial state
@@ -85,12 +81,14 @@ public class MultislideSolver
 
         info.Arena.Reset();
 
-        var semifrontierCollector = new SemifrontierCollector(semiFrontier, info);
+        var semifrontierCollector = new MultislideSemifrontierCollector(semiFrontier, info);
 
-        var upDownCollectors = new MultislideUpDownCollector[PuzzleInfo.THREADS];
+        var upDownCollectors = new IMultislideUpDownCollector[PuzzleInfo.THREADS];
         for (int i = 0; i < PuzzleInfo.THREADS; i++)
         {
-            var coll = new MultislideUpDownCollector(info, semifrontierCollector);
+            IMultislideUpDownCollector coll = info.Height == 2 ?
+                new MultislideUpDownCollector2(info, semifrontierCollector) :
+                new MultislideUpDownCollector(info, semifrontierCollector);
             upDownCollectors[i] = coll;
         }
 
@@ -150,61 +148,33 @@ public class MultislideSolver
                         while (true)
                         {
                             int s = -1;
-                            lock (info)
-                            {
-                                s = segmentIndex++;
-                            }
+                            lock (info) s = segmentIndex++;
                             if (s >= info.SegmentsCount) break;
 
-                            // up / down
-                            var t1 = Task.Factory.StartNew(() => {
-                                for (int p = 0; p < semiFrontier.SegmentParts(s); p++)
-                                {
-                                    int len = semiFrontier.ReadSegment(s, p, valsBuffersList2[index]);
-                                    lock(state)
-                                    {
-                                        state.AddUpDown(valsBuffersList2[index], len);
-                                    }
-                                }
-                            });
-                            // left/right
-                            var t2 = Task.Factory.StartNew(() => {
-                                for (int p = 0; p < frontierLtRt.SegmentParts(s); p++)
-                                {
-                                    int len = frontierLtRt.Read(s, p, tempBuffersList[index], valsBuffersList[index]);
-                                    lock (state)
-                                    {
-                                        state.AddLeftRight(valsBuffersList[index], len);
-                                    }
-                                }
-                            });
-                            Task.WaitAll(new Task[] { t1, t2 });
+                            // add up/down
+                            for (int p = 0; p < semiFrontier.SegmentParts(s); p++)
+                            {
+                                int len = semiFrontier.ReadSegment(s, p, valsBuffersList[index]);
+                                state.AddUpDown(valsBuffersList[index], len);
+                            }
 
-                            // Exclude current state
+                            // addd left/right and exclude left / right
+                            for (int p = 0; p < frontierLtRt.SegmentParts(s); p++)
+                            {
+                                int len = frontierLtRt.Read(s, p, tempBuffersList[index], valsBuffersList[index]);
+                                state.AddLeftRightAndExclude(valsBuffersList[index], len);
+                            }
+                            state.FinishAddLeftRightAndExclude();
 
-                            var t3 = Task.Factory.StartNew(() => {
+                            // Exclude up/down
+                            if (info.Height != 2)
+                            {
                                 for (int p = 0; p < frontierUpDn.SegmentParts(s); p++)
                                 {
                                     int len = frontierUpDn.Read(s, p, tempBuffersList[index], valsBuffersList[index]);
-                                    lock (state)
-                                    {
-                                        state.Exclude(valsBuffersList[index], len);
-                                    }
+                                    state.Exclude(valsBuffersList[index], len);
                                 }
-                            });
-
-                            var t4 = Task.Factory.StartNew(() => {
-                                for (int p = 0; p < frontierLtRt.SegmentParts(s); p++)
-                                {
-                                    int len = frontierLtRt.Read(s, p, tempBuffersListXX[index], valsBuffersListXX[index]);
-                                    lock (state)
-                                    {
-                                        state.Exclude(valsBuffersListXX[index], len);
-                                    }
-                                }
-                            });
-
-                            Task.WaitAll(new Task[] { t3, t4 });
+                            }
 
                             frontierCollectorUpDn.Segment = s;
                             frontierCollectorLtRt.Segment = s;
@@ -241,15 +211,15 @@ public class MultislideSolver
         Console.WriteLine($"2) Timer.FillFrontier={TimerFillFrontier}");
         Console.WriteLine();
         GpuSolver.PrintStats();
-        UpDownCollector.PrintStats();
+        if (info.Height == 2) MultislideUpDownCollector2.PrintStats();
+        else MultislideUpDownCollector.PrintStats();
         SemifrontierCollector.PrintStats();
         SegmentedFile.PrintStats();
         Console.WriteLine();
-        Frontier.PrintStats();
-        FrontierStates.PrintStats();
+        MultislideFrontier.PrintStats();
+        MultislideFrontierStates.PrintStats();
         PackStates.PrintStats();
         PackInts.PrintStats();
-        PackBytes.PrintStats();
 
         info.Close();
 
