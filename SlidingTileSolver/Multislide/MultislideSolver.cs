@@ -26,11 +26,16 @@ public class MultislideSolver
         var results = new List<long>();
 
         /*
-        using var frontier = new MultislideFrontier(info, "E:/PUZ/frontier.1.1", "F:/PUZ/frontier.1.2", "G:/PUZ/frontier.1.3", "H:/PUZ/frontier.1.4", "H:/PUZ/frontier.1.5");
-        using var newFrontier = new MultislideFrontier(info, "G:/PUZ/frontier.2.1", "G:/PUZ/frontier.2.2", "H:/PUZ/frontier.2.3", "E:/PUZ/frontier.2.4", "F:/PUZ/frontier.2.5");
+        using var frontierUpDn = new MultislideFrontier(info, 
+            "E:/PUZ/frontier.up.dn.1", "F:/PUZ/frontier.up.dn.2", "G:/PUZ/frontier.up.dn.3", "H:/PUZ/frontier.up.dn.4", "H:/PUZ/frontier.up.dn.5");
+        using var frontierLtRt = new MultislideFrontier(info, 
+            "F:/PUZ/frontier.lt.rt.1", "G:/PUZ/frontier.lt.rt.2", "H:/PUZ/frontier.lt.rt.3", "H:/PUZ/frontier.lt.rt.4", "E:/PUZ/frontier.lt.rt.5");
+        using var newFrontierUpDn = new MultislideFrontier(info, 
+            "G:/PUZ/frontier.new.up.dn.1", "H:/PUZ/frontier.new.up.dn.2", "H:/PUZ/frontier.new.up.dn.3", "E:/PUZ/frontier.new.up.dn.4", "F:/PUZ/frontier.new.up.dn.5");
+        using var newFrontierLtRt = new MultislideFrontier(info, 
+            "H:/PUZ/frontier.new.lt.rt.1", "H:/PUZ/frontier.new.lt.rt.2", "E:/PUZ/frontier.new.lt.rt.3", "F:/PUZ/frontier.new.lt.rt.4", "G:/PUZ/frontier.new.lt.rt.5");
         using var semiFrontier = new SegmentedFile(info.SegmentsCount, 
-            "H:/PUZ/semifrontier.1", "H:/PUZ/semifrontier.2", "E:/PUZ/semifrontier.3", "F:/PUZ/semifrontier.4", "G:/PUZ/semifrontier.5",
-            "F:/PUZ/semifrontier.6", "E:/PUZ/semifrontier.7", "H:/PUZ/semifrontier.8", "G:/PUZ/semifrontier.9", "H:/PUZ/semifrontier.A");
+            "H:/PUZ/semifrontier.1", "E:/PUZ/semifrontier.2", "F:/PUZ/semifrontier.3", "G:/PUZ/semifrontier.4", "H:/PUZ/semifrontier.5");
         */
 
         using var frontierUpDn = new MultislideFrontier(info, "c:/PUZ/frontier.up.dn");
