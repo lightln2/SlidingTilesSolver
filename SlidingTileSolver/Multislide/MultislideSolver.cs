@@ -37,12 +37,12 @@ public class MultislideSolver
         using var newFrontier = new Frontier(info, "d:/PUZ/frontier.2");
         using var semiFrontier = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier");
 
-        List<uint[]> valsBuffersList = new List<uint[]>();
-        List<uint[]> valsBuffersList2 = new List<uint[]>();
-        List<uint[]> valsBuffersList3 = new List<uint[]>();
-        List<byte[]> statesBuffersList = new List<byte[]>();
-        List<byte[]> tempBuffersList = new List<byte[]>();
-        List<FrontierCollector> frontierCollectorsList = new List<FrontierCollector>();
+        var valsBuffersList = new List<uint[]>();
+        var valsBuffersList2 = new List<uint[]>();
+        var valsBuffersList3 = new List<uint[]>();
+        var statesBuffersList = new List<byte[]>();
+        var tempBuffersList = new List<byte[]>();
+        var frontierCollectorsList = new List<MultislideFrontierCollector>();
 
         for (int i = 0; i < PuzzleInfo.THREADS; i++)
         {
@@ -51,7 +51,7 @@ public class MultislideSolver
             valsBuffersList3.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             statesBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             tempBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
-            frontierCollectorsList.Add(new FrontierCollector(newFrontier, tempBuffersList[i], valsBuffersList[i], statesBuffersList[i]));
+            frontierCollectorsList.Add(new MultislideFrontierCollector(newFrontier, tempBuffersList[i], valsBuffersList[i], statesBuffersList[i]));
         }
 
         // Fill initial state

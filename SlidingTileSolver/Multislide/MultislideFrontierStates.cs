@@ -110,7 +110,7 @@ public unsafe class MultislideFrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe long Collect(FrontierCollector collector)
+    public unsafe long Collect(MultislideFrontierCollector collector)
     {
         Timer.Restart();
         long count = 0;

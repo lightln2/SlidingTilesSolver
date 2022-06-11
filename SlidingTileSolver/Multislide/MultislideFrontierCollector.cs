@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public class FrontierCollector
+public class MultislideFrontierCollector
 {
     public readonly Frontier Frontier;
     public int Segment { get; set; } = -1;
@@ -14,7 +14,7 @@ public class FrontierCollector
     private readonly byte[] States;
     private int BufferPosition;
 
-    public FrontierCollector(Frontier frontier, byte[] tempBuffer, uint[] vals, byte[] states)
+    public MultislideFrontierCollector(Frontier frontier, byte[] tempBuffer, uint[] vals, byte[] states)
     {
         Frontier = frontier;
         TempBuffer = tempBuffer;
