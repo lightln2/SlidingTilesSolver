@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public class Frontier : IDisposable
+public class MultislideFrontier : IDisposable
 {
     private static TimeSpan TimeWrite = TimeSpan.Zero;
     private static TimeSpan TimeRead = TimeSpan.Zero;
@@ -14,17 +14,12 @@ public class Frontier : IDisposable
     private SegmentedFile File;
     private Stopwatch Timer = new Stopwatch();
 
-    public Frontier(string file, PuzzleInfo info)
-    {
-        File = new SegmentedFile(file, info.SegmentsCount);
-    }
-
-    public Frontier(PuzzleInfo info, params string[] files)
+    public MultislideFrontier(PuzzleInfo info, params string[] files)
     {
         File = new SegmentedFile(info.SegmentsCount, files);
     }
 
-    public void Swap(Frontier other)
+    public void Swap(MultislideFrontier other)
     {
         Util.Swap(ref File, ref other.File);
     }
@@ -39,22 +34,22 @@ public class Frontier : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Write(int segment, byte[] tempBuffer, uint[] vals, byte[] states, int count)
+    public void Write(int segment, byte[] tempBuffer, uint[] vals, int count)
     {
         if (count == 0) return;
         Timer.Restart();
-        int byteLen = PackStates.Pack(vals, states, count, tempBuffer);
+        int byteLen = PackStates.PackVals(vals, count, tempBuffer);
         File.WriteSegment(segment, tempBuffer, 0, byteLen);
         TimeWrite += Timer.Elapsed;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public int Read(int segment, int part, byte[] tempBuffer, uint[] vals, byte[] states)
+    public int Read(int segment, int part, byte[] tempBuffer, uint[] vals)
     {
         Timer.Restart();
         int byteLen = File.ReadSegment(segment, part, tempBuffer);
         if (byteLen == 0) return 0;
-        int count = PackStates.Unpack(tempBuffer, byteLen, vals, states);
+        int count = PackStates.UnpackVals(tempBuffer, byteLen, vals);
         TimeRead += Timer.Elapsed;
         return count;
     }

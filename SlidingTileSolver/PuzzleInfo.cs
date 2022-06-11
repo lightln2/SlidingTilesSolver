@@ -70,6 +70,9 @@ public class PuzzleInfo
     public const byte STATE_UP_DN = STATE_UP | STATE_DN;
     public const byte STATE_LT_RT = STATE_LT | STATE_RT;
 
+    public const byte MULTISLIDE_UP_DN = 1;
+    public const byte MULTISLIDE_LT_RT = 2;
+
     public bool CanGoUp(long index) => (index & 15) >= Width;
     public bool CanGoDown(long index) => (index & 15) < Size - Width;
     public bool CanGoLeft(long index) => (index & 15) % Width != 0;

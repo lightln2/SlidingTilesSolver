@@ -72,6 +72,41 @@ public class PackStates
         return count;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe static int PackVals(uint[] vals, int count, byte[] buffer)
+    {
+        if (count == 0) return 0;
+        Timer.Restart();
+
+        int alignedCount = (count + 15) & ~15;
+
+        for (int i = count; i < alignedCount; i++)
+        {
+            vals[i] = 0;
+        }
+
+        int valsLen = PackInts.PackDiff(vals, alignedCount, buffer, 8);
+
+        WriteInt(buffer, 0, count);
+        WriteInt(buffer, 4, valsLen);
+
+        TimePack += Timer.Elapsed;
+        return 8 + valsLen;
+    }
+
+    public unsafe static int UnpackVals(byte[] buffer, int length, uint[] vals)
+    {
+        Timer.Restart();
+        if (length == 0) return 0;
+        int count = ReadInt(buffer, 0);
+        int alignedCount = (count + 15) & ~15;
+        int valsLen = ReadInt(buffer, 4);
+        int valsCnt = PackInts.UnpackDiff(buffer, 8, valsLen, vals);
+        if (valsCnt != alignedCount) throw new Exception($"Vals cnt={valsCnt} exp={alignedCount}");
+        TimeUnpack += Timer.Elapsed;
+        return count;
+    }
+
     public static void PrintStats()
     {
         Console.WriteLine($"PackStates: pack={TimePack} unpack={TimeUnpack}");

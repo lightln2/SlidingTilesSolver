@@ -7,29 +7,24 @@ using System.Threading.Tasks;
 
 public class MultislideFrontierCollector
 {
-    public readonly Frontier Frontier;
+    public readonly MultislideFrontier Frontier;
     public int Segment { get; set; } = -1;
     private readonly byte[] TempBuffer;
     private readonly uint[] Vals;
-    private readonly byte[] States;
     private int BufferPosition;
 
-    public MultislideFrontierCollector(Frontier frontier, byte[] tempBuffer, uint[] vals, byte[] states)
+    public MultislideFrontierCollector(MultislideFrontier frontier, byte[] tempBuffer, uint[] vals)
     {
         Frontier = frontier;
         TempBuffer = tempBuffer;
         Vals = vals;
-        States = states;
         BufferPosition = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Add(uint val, byte state)
+    public void Add(uint val)
     {
-        Vals[BufferPosition] = val;
-        States[BufferPosition] = state;
-        //BufferPosition++;
-        BufferPosition += (state == 0) ? 0 : 1;
+        Vals[BufferPosition++] = val;
         if (BufferPosition == Vals.Length)
         {
             Flush();
@@ -38,7 +33,7 @@ public class MultislideFrontierCollector
 
     private void Flush()
     {
-        Frontier.Write(Segment, TempBuffer, Vals, States, BufferPosition);
+        Frontier.Write(Segment, TempBuffer, Vals, BufferPosition);
         BufferPosition = 0;
     }
 

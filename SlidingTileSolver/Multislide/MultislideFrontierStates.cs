@@ -76,11 +76,11 @@ public unsafe class MultislideFrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void AddLeftRight(uint[] vals, byte[] states, int len)
+    public void AddLeftRight(uint[] vals, int len)
     {
         for (int i = 0; i < len; i++)
         {
-            byte mapIndex = (byte)((vals[i] << 4) | states[i]);
+            byte mapIndex = (byte)((vals[i] << 4) | 15);
             ulong x = MultislideLeftRightMap[mapIndex];
             StatesMap[vals[i] >> STATES_MAP_SKIP_POW] |= (byte)BitOperations.PopCount(x);
             States[vals[i] >> 4] |= x;
@@ -110,7 +110,7 @@ public unsafe class MultislideFrontierStates
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public unsafe long Collect(MultislideFrontierCollector collector)
+    public unsafe long Collect(MultislideFrontierCollector collectorUpDn, MultislideFrontierCollector collectorLtRt)
     {
         Timer.Restart();
         long count = 0;
@@ -134,14 +134,28 @@ public unsafe class MultislideFrontierStates
                     byte state = (byte)(((val >> off) & 0xF) | Bounds[j]);
                     count++;
 
-                    collector.Add(baseIndex | (uint)j, (byte)(~state & 15));
+                    bool isUpDn = (state & PuzzleInfo.STATE_UP) == 0 || (state & PuzzleInfo.STATE_DN) == 0;
+                    bool isLtRt = (state & PuzzleInfo.STATE_LT) == 0 || (state & PuzzleInfo.STATE_RT) == 0;
+                    if (isUpDn && isLtRt)
+                    {
+                        throw new Exception("AAA");
+                    }
+                    if (isUpDn)
+                    {
+                        collectorUpDn.Add(baseIndex | (uint)j);
+                    }
+                    if (isLtRt)
+                    {
+                        collectorLtRt.Add(baseIndex | (uint)j);
+                    }
 
                     val &= ~(0xFUL << off);
                 }
                 States[i] = 0;
             }
         }
-        collector.Close();
+        collectorUpDn.Close();
+        collectorLtRt.Close();
         TimeCollect += Timer.Elapsed;
         return count;
     }
