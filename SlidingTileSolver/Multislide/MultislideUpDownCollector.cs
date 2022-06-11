@@ -6,11 +6,10 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public unsafe class UpDownCollector
+public unsafe class MultislideUpDownCollector
 {
     private readonly PuzzleInfo Info;
-    public readonly SemifrontierCollector SemifrontierCollectorUp;
-    public readonly SemifrontierCollector SemifrontierCollectorDown;
+    public readonly SemifrontierCollector SemifrontierCollector;
     private const int BufferLength = GpuSolver.GPUSIZE;
     private readonly long* UpBuffer;
     private int UpCount;
@@ -21,11 +20,10 @@ public unsafe class UpDownCollector
     private static TimeSpan TimeClose = TimeSpan.Zero;
     private Stopwatch Timer = new Stopwatch();
 
-    public UpDownCollector(PuzzleInfo info, SemifrontierCollector semifrontierCollectorUp, SemifrontierCollector semifrontierCollectorDown)
+    public MultislideUpDownCollector(PuzzleInfo info, SemifrontierCollector semifrontierCollector)
     {
         Info = info;
-        SemifrontierCollectorUp = semifrontierCollectorUp;
-        SemifrontierCollectorDown = semifrontierCollectorDown;
+        SemifrontierCollector = semifrontierCollector;
         UpBuffer = info.Arena.Alloclong(BufferLength);
         DnBuffer = info.Arena.Alloclong(BufferLength);
     }
@@ -55,14 +53,58 @@ public unsafe class UpDownCollector
     private void FlushUp()
     {
         GpuSolver.CalcGPU_Up(UpCount, UpBuffer);
-        SemifrontierCollectorUp.Collect(UpBuffer, UpCount);
+        SemifrontierCollector.Collect(UpBuffer, UpCount);
+
+        for (int i = 0; i < Info.Height - 2; i++)
+        {
+            GpuSolver.CalcGPU_Up(UpCount, UpBuffer);
+
+            int src = 0;
+            int dst = 0;
+            while (dst < UpCount)
+            {
+                if (UpBuffer[dst] == -1)
+                {
+                    dst++;
+                    continue;
+                }
+                UpBuffer[src] = UpBuffer[dst];
+                src++;
+                dst++;
+            }
+            UpCount = src;
+            SemifrontierCollector.Collect(UpBuffer, UpCount);
+        }
+
         UpCount = 0;
     }
 
     private void FlushDn()
     {
         GpuSolver.CalcGPU_Down(DnCount, DnBuffer);
-        SemifrontierCollectorDown.Collect(DnBuffer, DnCount);
+        SemifrontierCollector.Collect(DnBuffer, DnCount);
+
+        for (int i = 0; i < Info.Height - 2; i++)
+        {
+            GpuSolver.CalcGPU_Down(DnCount, DnBuffer);
+
+            int src = 0;
+            int dst = 0;
+            while (dst < DnCount)
+            {
+                if (DnBuffer[dst] == -1)
+                {
+                    dst++;
+                    continue;
+                }
+                DnBuffer[src] = DnBuffer[dst];
+                src++;
+                dst++;
+            }
+            DnCount = src;
+            SemifrontierCollector.Collect(DnBuffer, DnCount);
+        }
+
         DnCount = 0;
     }
 
@@ -71,8 +113,7 @@ public unsafe class UpDownCollector
         Timer.Restart();
         FlushUp();
         FlushDn();
-        SemifrontierCollectorUp.Close();
-        SemifrontierCollectorDown.Close();
+        SemifrontierCollector.Close();
         TimeClose += Timer.Elapsed;
     }
 

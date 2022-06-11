@@ -67,6 +67,9 @@ public class PuzzleInfo
     public const byte STATE_LT = 4;
     public const byte STATE_RT = 8;
 
+    public const byte STATE_UP_DN = STATE_UP | STATE_DN;
+    public const byte STATE_LT_RT = STATE_LT | STATE_RT;
+
     public bool CanGoUp(long index) => (index & 15) >= Width;
     public bool CanGoDown(long index) => (index & 15) < Size - Width;
     public bool CanGoLeft(long index) => (index & 15) % Width != 0;
