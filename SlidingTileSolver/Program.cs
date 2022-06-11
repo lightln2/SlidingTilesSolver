@@ -13,7 +13,9 @@ class Program
         MultislideSolver.Solve(info);
         */
 
-        var info = new PuzzleInfo(4, 3, 0);
+        //PuzzleInfo.SetSemifrontierBufferPow(17);
+        //PuzzleInfo.THREADS = 3;
+        var info = new PuzzleInfo(6, 2, 0);
         MultislideSolver.Solve(info);
         
     }

@@ -287,33 +287,43 @@ public unsafe class GpuSolver
         }
     }
 
-    public static void CalcGPU_Multislide(int count, long[] indexes, int row, int height)
+    public static void CalcGPU_MultislideDown(int count, long* indexes, int times, Action onStep)
     {
-        fixed (long* ptr = indexes)
+        if (count == 0) return;
+        lock (context)
         {
-            CalcGPU_Multislide(count, ptr, row, height);
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            for (int i = 0; i < times; i++)
+            {
+                life_kernel_dn(count, pparams, dev.View);
+                accelerator.Synchronize();
+                dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+                onStep();
+            }
+            GpuExecTime += sw.Elapsed;
         }
     }
 
-    public static void CalcGPU_Multislide(int count, long* indexes, int row, int height)
+    public static void CalcGPU_MultislideUp(int count, long* indexes, int times, Action onStep)
     {
         if (count == 0) return;
-        if (height == 2)
+        if (times == 0) return;
+        lock (context)
         {
-            if (row == 0)
-                CalcGPU_Down(count, indexes);
-            else
-                CalcGPU_Up(count, indexes);
-        }
-        else if (height == 3)
-        {
-            if (row == 0)
+            ProcessedValues += count;
+            var sw = Stopwatch.StartNew();
+            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
+            for (int i = 0; i < times; i++)
             {
-
+                life_kernel_up(count, pparams, dev.View);
+                accelerator.Synchronize();
+                dev.AsContiguous().CopyToCPU(ref indexes[0], count);
+                onStep();
             }
-            throw new Exception($"height={height} is not supported");
+            GpuExecTime += sw.Elapsed;
         }
-        else throw new Exception($"height={height} is not supported");
     }
 
 }

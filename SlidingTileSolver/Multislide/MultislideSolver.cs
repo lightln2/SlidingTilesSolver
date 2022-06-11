@@ -191,7 +191,6 @@ public class MultislideSolver
                                         state.Exclude(valsBuffersList[index], len);
                                     }
                                 }
-
                             });
 
                             var t4 = Task.Factory.StartNew(() => {
