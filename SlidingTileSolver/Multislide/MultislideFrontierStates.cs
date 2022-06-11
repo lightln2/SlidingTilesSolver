@@ -19,54 +19,50 @@ public unsafe class MultislideFrontierStates
     private ulong* States;
 
     private ulong[] MultislideLeftRightMap;
-
-    private byte[] Bounds;
+    private ulong[] ExcludeMap;
 
     private Stopwatch Timer = new Stopwatch();
     
     public MultislideFrontierStates(PuzzleInfo info)
     {
-        StatesMapLength = info.StatesMapLength / 16;
+        StatesMapLength = (info.StatesMapLength + 31) / 32;
         States = info.Arena.AllocUlong(StatesMapLength);
-        StatesMap = new byte[(StatesMapLength >> (STATES_MAP_SKIP_POW - 4)) + 1];
+        StatesMap = new byte[(StatesMapLength >> (STATES_MAP_SKIP_POW - 5)) + 1];
 
-        Bounds = new byte[16];
-        for (int i = 0; i < 16; i++)
-        {
-            byte s = (byte)~info.GetState(i);
-            Bounds[i] = s;
-        }
+        MultislideLeftRightMap = new ulong[32];
 
-        MultislideLeftRightMap = new ulong[256];
-        for (int b = 0; b < 256; b++)
+        for (int b = 0; b < 32; b++)
         {
-            if ((b >> 4) >= info.Size)
+            if ((b & 15) >= info.Size)
             {
                 MultislideLeftRightMap[b] = 0;
                 continue;
             }
+
             ulong x = 0;
+
+            int pos = b;
+            while (info.CanGoLeft(pos))
             {
-                int index = b >> 4;
-                int state = (b & 15) & (byte)~Bounds[index];
-                while ((state & PuzzleInfo.STATE_LT) != 0)
-                {
-                    x |= (ulong)(PuzzleInfo.STATE_LT_RT) << ((index - 1) * 4);
-                    index--;
-                    state = (b & 15) & (byte)~Bounds[index];
-                }
+                pos--;
+                x |= (ulong)PuzzleInfo.MULTISLIDE_LT_RT << (pos * 2);
             }
+
+            pos = b;
+            while (info.CanGoRight(pos))
             {
-                int index = b >> 4;
-                int state = (b & 15) & (byte)~Bounds[index];
-                while ((state & PuzzleInfo.STATE_RT) != 0)
-                {
-                    x |= (ulong)(PuzzleInfo.STATE_LT_RT) << ((index + 1) * 4);
-                    index++;
-                    state = (b & 15) & (byte)~Bounds[index];
-                }
+                pos++;
+                x |= (ulong)PuzzleInfo.MULTISLIDE_LT_RT << (pos * 2);
             }
+
             MultislideLeftRightMap[b] = x;
+        }
+
+        ExcludeMap = new ulong[32];
+
+        for (int b = 0; b < 32; b++)
+        {
+            ExcludeMap[b] = ~(3UL << (b * 2));
         }
     }
 
@@ -80,10 +76,9 @@ public unsafe class MultislideFrontierStates
     {
         for (int i = 0; i < len; i++)
         {
-            byte mapIndex = (byte)((vals[i] << 4) | 15);
-            ulong x = MultislideLeftRightMap[mapIndex];
+            ulong x = MultislideLeftRightMap[vals[i] & 31];
             StatesMap[vals[i] >> STATES_MAP_SKIP_POW] |= (byte)BitOperations.PopCount(x);
-            States[vals[i] >> 4] |= x;
+            States[vals[i] >> 5] |= x;
         }
     }
 
@@ -92,8 +87,7 @@ public unsafe class MultislideFrontierStates
     {
         for (int i = 0; i < len; i++)
         {
-            int index = (int)(vals[i] & 15);
-            States[vals[i] >> 4] &= ~((ulong)15 << (index * 4));
+            States[vals[i] >> 5] &= ExcludeMap[vals[i] & 31];
         }
     }
 
@@ -103,9 +97,9 @@ public unsafe class MultislideFrontierStates
         for (int i = 0; i < count; i++)
         {
             long val = buffer[i];
-            int offset = (int)((val & 15) << 2);
+            int offset = (int)((val & 31) << 1);
             StatesMap[val >> STATES_MAP_SKIP_POW] = 1;
-            States[val >> 4] |= (ulong)PuzzleInfo.STATE_UP_DN << offset;
+            States[val >> 5] |= (ulong)PuzzleInfo.MULTISLIDE_UP_DN << offset;
         }
     }
 
@@ -118,38 +112,34 @@ public unsafe class MultislideFrontierStates
         {
             if (StatesMap[q] == 0) continue;
             StatesMap[q] = 0;
-            long start = q << (STATES_MAP_SKIP_POW - 4);
-            long end = Math.Min(StatesMapLength, (q + 1) << (STATES_MAP_SKIP_POW - 4));
+            long start = q << (STATES_MAP_SKIP_POW - 5);
+            long end = Math.Min(StatesMapLength, (q + 1) << (STATES_MAP_SKIP_POW - 5));
             for (long i = start; i < end; i++)
             {
                 ulong val = States[i];
                 if (val == 0) continue;
-                uint baseIndex = (uint)(i << 4);
+                uint baseIndex = (uint)(i << 5);
 
                 while (val != 0)
                 {
                     int bit = BitOperations.TrailingZeroCount(val);
-                    int j = (bit >> 2);
-                    int off = j << 2;
-                    byte state = (byte)(((val >> off) & 0xF) | Bounds[j]);
+                    int j = (bit >> 1);
+                    int off = j << 1;
+                    byte state = (byte)(((val >> off) & 3));
                     count++;
 
-                    bool isUpDn = (state & PuzzleInfo.STATE_UP) == 0 || (state & PuzzleInfo.STATE_DN) == 0;
-                    bool isLtRt = (state & PuzzleInfo.STATE_LT) == 0 || (state & PuzzleInfo.STATE_RT) == 0;
-                    if (isUpDn && isLtRt)
+                    switch(state)
                     {
-                        throw new Exception("AAA");
+                        case PuzzleInfo.MULTISLIDE_UP_DN:
+                            collectorLtRt.Add(baseIndex | (uint)j);
+                            break;
+                        case PuzzleInfo.MULTISLIDE_LT_RT:
+                            collectorUpDn.Add(baseIndex | (uint)j);
+                            break;
+                        default:
+                            break;
                     }
-                    if (isUpDn)
-                    {
-                        collectorUpDn.Add(baseIndex | (uint)j);
-                    }
-                    if (isLtRt)
-                    {
-                        collectorLtRt.Add(baseIndex | (uint)j);
-                    }
-
-                    val &= ~(0xFUL << off);
+                    val &= ~(3UL << off);
                 }
                 States[i] = 0;
             }
