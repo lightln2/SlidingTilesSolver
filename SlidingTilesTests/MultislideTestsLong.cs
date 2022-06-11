@@ -11,19 +11,22 @@ public class MultislideTestsLong
 
     public void Test(int width, int height, int initialIndex, int expectedMax, string counts)
     {
-        Test(new PuzzleInfo(width, height, initialIndex), expectedMax, counts);
+        PuzzleInfo.THREADS = 4;
+        PuzzleInfo.SetSemifrontierBufferPow(17);
+        Test(new PuzzleInfo(width, height, initialIndex, /*multislide=*/ true), expectedMax, counts);
     }
 
     public void TestPartial(int width, int height, int maxSteps, string counts)
     {
-        var info = new PuzzleInfo(width, height, 0);
+        PuzzleInfo.THREADS = 4;
+        PuzzleInfo.SetSemifrontierBufferPow(17);
+        var info = new PuzzleInfo(width, height, 0, /*multislide=*/ true);
         info.MaxSteps = maxSteps;
         Test(info, maxSteps, counts);
     }
 
     public void Test(PuzzleInfo info, int expectedMax, string counts)
     {
-        PuzzleInfo.SetSemifrontierBufferPow(16);
         long[] res = MultislideSolver.Solve(info);
         int max = res.Length - 1;
         Assert.AreEqual(expectedMax, max);
@@ -121,7 +124,7 @@ public class MultislideTestsLong
     [TestMethod]
     public void Test_14_7_2_Partial()
     {
-        var info = new PuzzleInfo(7, 2, 0);
+        var info = new PuzzleInfo(7, 2, 0, /*multislide=*/ true);
         info.MaxSteps = 23;
         Test(info, 23,
              "1 7 12 42 72 252 431 1470 2430 7070 11728 34125 55550 153188 247010 659302 1055500 2672600 4206121 10228379 15906111 36437156 55403239 120204434"
@@ -131,7 +134,7 @@ public class MultislideTestsLong
     [TestMethod]
     public void Test_15_5_3_Partial()
     {
-        var info = new PuzzleInfo(5, 3, 0);
+        var info = new PuzzleInfo(5, 3, 0, /*multislide=*/ true);
         info.MaxSteps = 20;
         Test(info, 20,
             "1 6 16 48 128 384 1023 3036 7796 22155 55915 155931 385558 1049703 2524357 6646590 15411981 38957481 86507301 207621178 436566702"
@@ -141,7 +144,7 @@ public class MultislideTestsLong
     [TestMethod]
     public void Test_16_4_4_Partial()
     {
-        var info = new PuzzleInfo(4, 4, 0);
+        var info = new PuzzleInfo(4, 4, 0, /*multislide=*/ true);
         info.MaxSteps = 15;
         Test(info, 15,
             "1 6 18 54 162 486 1457 4334 12568 36046 102801 289534 808623 2231878 6076994 16288752"
@@ -151,7 +154,7 @@ public class MultislideTestsLong
     [TestMethod]
     public void Test_16_8_2_Partial()
     {
-        var info = new PuzzleInfo(8, 2, 0);
+        var info = new PuzzleInfo(8, 2, 0, /*multislide=*/ true);
         info.MaxSteps = 15;
         Test(info, 15,
             "1 8 14 56 98 392 685 2688 4552 15120 25736 85280 142472 449216 746786 2286992"

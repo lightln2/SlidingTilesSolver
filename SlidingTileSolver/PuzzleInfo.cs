@@ -23,6 +23,7 @@ public class PuzzleInfo
         SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW);
     }
 
+    public readonly bool Multislide;
     public readonly int Width, Height, Size;
     public readonly long InitialIndex;
     // real number of states
@@ -37,8 +38,9 @@ public class PuzzleInfo
     public long BytesNeeded;
     public MemArena Arena;
 
-    public PuzzleInfo(int width, int height, int initialIndex)
+    public PuzzleInfo(int width, int height, int initialIndex, bool multislide = false)
     {
+        Multislide = multislide;
         Width = width;
         Height = height;
         Size = width * height;
@@ -50,8 +52,9 @@ public class PuzzleInfo
         StatesMapLength = SegmentsCount == 1 ? Total : 1L << SEGMENT_SIZE_POW;
 
         long statesMem = THREADS * StatesMapLength / 2;
-        long updownMem = THREADS * 2L * GpuSolver.GPUSIZE * 8;
+        if (Multislide) statesMem /= 2;
         long sfMem = SegmentsCount * 2L * SEMIFRONTIER_BUFFER_SIZE * 4;
+        long updownMem = THREADS * 2L * GpuSolver.GPUSIZE * 8;
         BytesNeeded = Math.Max(statesMem, sfMem + updownMem);
         Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; ud: {updownMem:N0} Needed: {BytesNeeded:N0} bytes");
         Arena = new MemArena(BytesNeeded);

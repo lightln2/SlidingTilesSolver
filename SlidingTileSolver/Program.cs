@@ -13,9 +13,9 @@ class Program
         MultislideSolver.Solve(info);
         */
 
-        //PuzzleInfo.SetSemifrontierBufferPow(17);
-        //PuzzleInfo.THREADS = 2;
-        var info = new PuzzleInfo(6, 2, 0);
+        PuzzleInfo.SetSemifrontierBufferPow(17);
+        PuzzleInfo.THREADS = 5;
+        var info = new PuzzleInfo(4, 4, 0, /*multislide*/ true);
         //info.MaxSteps = 25;
         MultislideSolver.Solve(info);
         
