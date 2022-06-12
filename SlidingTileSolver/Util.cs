@@ -28,4 +28,9 @@ public class Util
         x = y;
         y = temp;
     }
+
+    public static string GB(long size)
+    {
+        return (size / 1024.0 / 1024.0 / 1024.0).ToString("N1");
+    }
 }

@@ -18,6 +18,8 @@ public class PuzzleSolver
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static unsafe long[] Solve(PuzzleInfo info)
     {
+        if (info.Multislide) throw new Exception("PuzzleInfo.Multislide should not be set");
+
         var totalTime = Stopwatch.StartNew();
 
         GpuSolver.Initialize(info.Width, info.Height);
@@ -223,7 +225,11 @@ public class PuzzleSolver
                 Task.WaitAll(tasks.ToArray());
             }
 
-            long currentSize = frontier.TotalSize() + newFrontier.TotalSize() + semiFrontierUp.TotalSize() + semiFrontierDown.TotalSize();
+            long semifrontierSize = semiFrontierUp.TotalSize() + semiFrontierDown.TotalSize();
+            long frontierSize = frontier.TotalSize();
+            long newFrontierSize = newFrontier.TotalSize();
+            long currentSize = semifrontierSize + frontierSize + newFrontierSize;
+
             TimerFillFrontier += timer.Elapsed;
 
             frontier.Swap(newFrontier);
@@ -234,7 +240,10 @@ public class PuzzleSolver
             if (count == 0) break;
             results.Add(count);
             countSoFar += count;
-            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed}) FilesSize={currentSize:N0}");
+            double percent = countSoFar * 100.0 / info.RealStates;
+            Console.WriteLine(
+                $"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({percent:N5}% in {totalTime.Elapsed}) " + 
+                $"FilesGB={Util.GB(currentSize)} ({Util.GB(frontierSize)}, {Util.GB(semifrontierSize)}, {Util.GB(newFrontierSize)})");
         }
         Console.WriteLine($"Steps: {results.Count - 1}, Total: {countSoFar:N0}, eq={countSoFar == info.RealStates}");
         Console.WriteLine($"{string.Join(" ", results)}");

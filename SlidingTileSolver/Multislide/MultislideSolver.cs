@@ -18,6 +18,7 @@ public class MultislideSolver
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static unsafe long[] Solve(PuzzleInfo info)
     {
+        if (!info.Multislide) throw new Exception("PuzzleInfo.Multislide should be set");
         var totalTime = Stopwatch.StartNew();
 
         GpuSolver.Initialize(info.Width, info.Height);
@@ -212,7 +213,10 @@ public class MultislideSolver
 
             TimerFillFrontier += timer.Elapsed;
 
-            long currentSize = frontierUpDn.TotalSize() + frontierLtRt.TotalSize() + semiFrontier.TotalSize() + newFrontierUpDn.TotalSize() + newFrontierLtRt.TotalSize();
+            long semifrontierSize = semiFrontier.TotalSize();
+            long frontierSize = frontierUpDn.TotalSize() + frontierLtRt.TotalSize();
+            long newFrontierSize = newFrontierUpDn.TotalSize() + newFrontierLtRt.TotalSize();
+            long currentSize = semifrontierSize + frontierSize + newFrontierSize;
 
             frontierUpDn.Swap(newFrontierUpDn);
             frontierLtRt.Swap(newFrontierLtRt);
@@ -223,7 +227,10 @@ public class MultislideSolver
             if (count == 0) break;
             results.Add(count);
             countSoFar += count;
-            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed}) FilesSize={currentSize:N0}");
+            double percent = countSoFar * 100.0 / info.RealStates;
+            Console.WriteLine(
+                $"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({percent:N5}% in {totalTime.Elapsed}) " +
+                $"FilesGB={Util.GB(currentSize)} ({Util.GB(frontierSize)}, {Util.GB(semifrontierSize)}, {Util.GB(newFrontierSize)})");
         }
         Console.WriteLine($"Steps: {results.Count - 1}, Total: {countSoFar:N0}, eq={countSoFar == info.RealStates}");
         Console.WriteLine($"{string.Join(" ", results)}");

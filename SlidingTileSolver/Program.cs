@@ -13,12 +13,15 @@ class Program
         MultislideSolver.Solve(info);
         */
 
-        //PuzzleInfo.SetSemifrontierBufferPow(16);
         PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING = false;
-        PuzzleInfo.THREADS = 4;
-        var info = new PuzzleInfo(4, 3, 0, /*multislide*/ true);
-        //info.MaxSteps = 22;
-        //MultislideSolver.Solve(info);
+        PuzzleInfo.THREADS = 6;
+        var info = new PuzzleInfo(7, 2, 0, true);
+        MultislideSolver.Solve(info);
+
+        /*
+        PuzzleInfo.THREADS = 3;
+        var info = new PuzzleInfo(7, 2, 0);
         PuzzleSolver.Solve(info);
+        */
     }
 }

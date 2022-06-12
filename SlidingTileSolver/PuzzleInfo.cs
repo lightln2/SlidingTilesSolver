@@ -57,7 +57,10 @@ public class PuzzleInfo
         long sfMem = SegmentsCount * 2L * SEMIFRONTIER_BUFFER_SIZE * 4;
         long updownMem = THREADS * 2L * GpuSolver.GPUSIZE * 8;
         BytesNeeded = Math.Max(statesMem, sfMem + updownMem);
-        Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; ud: {updownMem:N0} Needed: {BytesNeeded:N0} bytes");
+        if (Multislide)
+            Console.WriteLine($"States: {THREADS} x {StatesMapLength / 4:N0} = {statesMem:N0} (multislide), s/f: {sfMem:N0}; up/dn: {updownMem:N0} Needed: {BytesNeeded:N0} bytes");
+        else
+            Console.WriteLine($"States: {THREADS} x {StatesMapLength / 2:N0} = {statesMem:N0}, s/f: {sfMem:N0}; up/dn: {updownMem:N0} Needed: {BytesNeeded:N0} bytes");
         Arena = new MemArena(BytesNeeded);
     }
 
