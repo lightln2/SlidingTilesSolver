@@ -62,41 +62,47 @@ public unsafe class PackInts
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe static int PackDiff(uint[] arr, int count, byte[] buffer, int offset)
     {
+        fixed (uint* src = arr)
+        {
+            return PackDiff(src, count, buffer, offset);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe static int PackDiff(uint* src, int count, byte[] buffer, int offset)
+    {
         if ((count & 15) != 0) throw new Exception("Count should be divisible by 16");
         Timer.Restart();
         int pos = offset;
         uint last = 0;
-        fixed (uint* src = arr)
+        fixed (byte* dst = buffer)
         {
-            fixed (byte* dst = buffer)
+            for (int i = 0; i < count; i += 4)
             {
-                for (int i = 0; i < count; i += 4)
-                {
-                    uint x = src[i], y = src[i + 1], z = src[i + 2], t = src[i + 3];
-                    uint newLast = t;
-                    t -= z;
-                    z -= y;
-                    y -= x;
-                    x -= last;
-                    last = newLast;
-                    int sx = BytesCntMinusOne(x);
-                    int sy = BytesCntMinusOne(y);
-                    int sz = BytesCntMinusOne(z);
-                    int st = BytesCntMinusOne(t);
+                uint x = src[i], y = src[i + 1], z = src[i + 2], t = src[i + 3];
+                uint newLast = t;
+                t -= z;
+                z -= y;
+                y -= x;
+                x -= last;
+                last = newLast;
+                int sx = BytesCntMinusOne(x);
+                int sy = BytesCntMinusOne(y);
+                int sz = BytesCntMinusOne(z);
+                int st = BytesCntMinusOne(t);
 
-                    byte state = (byte)(sx | (sy << 2) | (sz << 4) | (st << 6));
-                    dst[pos++] = state;
+                byte state = (byte)(sx | (sy << 2) | (sz << 4) | (st << 6));
+                dst[pos++] = state;
 
-                    *(uint*)(dst + pos) = x;
-                    pos += sx + 1;
-                    *(uint*)(dst + pos) = y;
-                    pos += sy + 1;
-                    *(uint*)(dst + pos) = z;
-                    pos += sz + 1;
-                    *(uint*)(dst + pos) = t;
-                    pos += st + 1;
+                *(uint*)(dst + pos) = x;
+                pos += sx + 1;
+                *(uint*)(dst + pos) = y;
+                pos += sy + 1;
+                *(uint*)(dst + pos) = z;
+                pos += sz + 1;
+                *(uint*)(dst + pos) = t;
+                pos += st + 1;
 
-                }
             }
         }
         TimePack += Timer.Elapsed;

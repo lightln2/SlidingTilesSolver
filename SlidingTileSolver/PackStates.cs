@@ -76,6 +76,16 @@ public class PackStates
     public unsafe static int PackVals(uint[] vals, int count, byte[] buffer)
     {
         if (count == 0) return 0;
+        fixed (uint* ptr = vals)
+        {
+            return PackVals(ptr, count, buffer);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public unsafe static int PackVals(uint* vals, int count, byte[] buffer)
+    {
+        if (count == 0) return 0;
         Timer.Restart();
 
         int alignedCount = (count + 15) & ~15;
