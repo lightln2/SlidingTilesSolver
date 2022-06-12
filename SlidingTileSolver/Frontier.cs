@@ -14,11 +14,6 @@ public class Frontier : IDisposable
     private SegmentedFile File;
     private Stopwatch Timer = new Stopwatch();
 
-    public Frontier(string file, PuzzleInfo info)
-    {
-        File = new SegmentedFile(file, info.SegmentsCount);
-    }
-
     public Frontier(PuzzleInfo info, params string[] files)
     {
         File = new SegmentedFile(info.SegmentsCount, files);
