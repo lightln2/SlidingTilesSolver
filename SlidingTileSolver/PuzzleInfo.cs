@@ -6,14 +6,13 @@ using System.Threading.Tasks;
 
 public class PuzzleInfo
 {
-    public static int THREADS = 4;
-    public int MaxSteps = 10000;
-
     public const int SEGMENT_SIZE_POW = 32;
 
-    public const int FRONTIER_BUFFER_SIZE = 2 * 1024 * 1024;
+    public static bool SEMIFRONTIER_DIFF_ENCODING = true;
+    public static int THREADS = 4;
+    public const int FRONTIER_BUFFER_SIZE = 4 * 1024 * 1024;
 
-    // 18 is 1MB = 1M / 4 uint's
+    // 18 is 1MB = 256K uint's
     public static int SEMIFRONTIER_BUFFER_POW { get; private set; } = 18;
     public static int SEMIFRONTIER_BUFFER_SIZE { get; private set; } = (1 << SEMIFRONTIER_BUFFER_POW);
 
@@ -22,6 +21,8 @@ public class PuzzleInfo
         SEMIFRONTIER_BUFFER_POW = pow;
         SEMIFRONTIER_BUFFER_SIZE = (1 << SEMIFRONTIER_BUFFER_POW);
     }
+
+    public int MaxSteps = 10000;
 
     public readonly bool Multislide;
     public readonly int Width, Height, Size;

@@ -38,11 +38,11 @@ public class MultislideSolver
             "H:/PUZ/semifrontier.1", "E:/PUZ/semifrontier.2", "F:/PUZ/semifrontier.3", "G:/PUZ/semifrontier.4", "H:/PUZ/semifrontier.5");
         */
 
-        using var frontierUpDn = new MultislideFrontier(info, "c:/PUZ/frontier.up.dn");
-        using var frontierLtRt = new MultislideFrontier(info, "c:/PUZ/frontier.lt.rt");
-        using var newFrontierUpDn = new MultislideFrontier(info, "d:/PUZ/frontier.new.up.dn");
-        using var newFrontierLtRt = new MultislideFrontier(info, "d:/PUZ/frontier.new.lt.rt");
-        using var semiFrontier = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier");
+        using var frontierUpDn = new MultislideFrontier(info, "c:/PUZ/frontier.up.dn", "d:/PUZ/frontier.up.dn");
+        using var frontierLtRt = new MultislideFrontier(info, "c:/PUZ/frontier.lt.rt", "d:/PUZ/frontier.lt.rt");
+        using var newFrontierUpDn = new MultislideFrontier(info, "c:/PUZ/frontier.new.up.dn", "d:/PUZ/frontier.new.up.dn");
+        using var newFrontierLtRt = new MultislideFrontier(info, "c:/PUZ/frontier.new.lt.rt", "d:/PUZ/frontier.new.lt.rt");
+        using var semiFrontier = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier", "d:/PUZ/semifrontier");
 
         var valsBuffersList = new List<uint[]>();
         var valsBuffersList2 = new List<uint[]>();
@@ -133,6 +133,12 @@ public class MultislideSolver
                 Task.WaitAll(tasks.ToArray());
             }
 
+            // frontierUpDn is not needed if Height is 2
+            if (info.Height == 2)
+            {
+                frontierUpDn.Clear();
+            }
+
             TimerFillSemifrontier += timer.Elapsed;
             timer.Restart();
 
@@ -159,8 +165,17 @@ public class MultislideSolver
                             // add up/down
                             for (int p = 0; p < semiFrontier.SegmentParts(s); p++)
                             {
-                                int len = semiFrontier.ReadSegment(s, p, valsBuffersList[index]);
-                                state.AddUpDown(valsBuffersList[index], len);
+                                if (PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING)
+                                {
+                                    int size = semiFrontier.ReadSegment(s, p, tempBuffersList[index]);
+                                    int len = PackStates.UnpackVals(tempBuffersList[index], size, valsBuffersList[index]);
+                                    state.AddUpDown(valsBuffersList[index], len);
+                                }
+                                else
+                                {
+                                    int len = semiFrontier.ReadSegment(s, p, valsBuffersList[index]);
+                                    state.AddUpDown(valsBuffersList[index], len);
+                                }
                             }
 
                             // addd left/right and exclude left / right
@@ -197,6 +212,8 @@ public class MultislideSolver
 
             TimerFillFrontier += timer.Elapsed;
 
+            long currentSize = frontierUpDn.TotalSize() + frontierLtRt.TotalSize() + semiFrontier.TotalSize() + newFrontierUpDn.TotalSize() + newFrontierLtRt.TotalSize();
+
             frontierUpDn.Swap(newFrontierUpDn);
             frontierLtRt.Swap(newFrontierLtRt);
             newFrontierUpDn.Clear();
@@ -206,7 +223,7 @@ public class MultislideSolver
             if (count == 0) break;
             results.Add(count);
             countSoFar += count;
-            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed})");
+            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed}) FilesSize={currentSize:N0}");
         }
         Console.WriteLine($"Steps: {results.Count - 1}, Total: {countSoFar:N0}, eq={countSoFar == info.RealStates}");
         Console.WriteLine($"{string.Join(" ", results)}");

@@ -41,6 +41,8 @@ public class PuzzleSolver
         List<uint[]> valsBuffersList3 = new List<uint[]>();
         List<byte[]> statesBuffersList = new List<byte[]>();
         List<byte[]> tempBuffersList = new List<byte[]>();
+        List<byte[]> tempBuffersList2 = new List<byte[]>();
+        List<byte[]> tempBuffersList3 = new List<byte[]>();
         List<FrontierCollector> frontierCollectorsList = new List<FrontierCollector>();
 
         for (int i = 0; i < PuzzleInfo.THREADS; i++)
@@ -50,6 +52,8 @@ public class PuzzleSolver
             valsBuffersList3.Add(new uint[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             statesBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE]);
             tempBuffersList.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
+            tempBuffersList2.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
+            tempBuffersList3.Add(new byte[PuzzleInfo.FRONTIER_BUFFER_SIZE * 4]);
             frontierCollectorsList.Add(new FrontierCollector(newFrontier, tempBuffersList[i], valsBuffersList[i], statesBuffersList[i]));
         }
 
@@ -151,10 +155,22 @@ public class PuzzleSolver
                             var t1 = Task.Factory.StartNew(() => {
                                 for (int p = 0; p < semiFrontierUp.SegmentParts(s); p++)
                                 {
-                                    int len = semiFrontierUp.ReadSegment(s, p, valsBuffersList2[index]);
-                                    lock(state)
+                                    if (PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING)
                                     {
-                                        state.AddUp(valsBuffersList2[index], len);
+                                        int size = semiFrontierUp.ReadSegment(s, p, tempBuffersList2[index]);
+                                        int len = PackStates.UnpackVals(tempBuffersList2[index], size, valsBuffersList2[index]);
+                                        lock (state)
+                                        {
+                                            state.AddUp(valsBuffersList2[index], len);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        int len = semiFrontierUp.ReadSegment(s, p, valsBuffersList2[index]);
+                                        lock (state)
+                                        {
+                                            state.AddUp(valsBuffersList2[index], len);
+                                        }
                                     }
                                 }
                             });
@@ -162,10 +178,22 @@ public class PuzzleSolver
                             var t2 = Task.Factory.StartNew(() => {
                                 for (int p = 0; p < semiFrontierDown.SegmentParts(s); p++)
                                 {
-                                    int len = semiFrontierDown.ReadSegment(s, p, valsBuffersList3[index]);
-                                    lock (state)
+                                    if (PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING)
                                     {
-                                        state.AddDown(valsBuffersList3[index], len);
+                                        int size = semiFrontierDown.ReadSegment(s, p, tempBuffersList3[index]);
+                                        int len = PackStates.UnpackVals(tempBuffersList3[index], size, valsBuffersList3[index]);
+                                        lock (state)
+                                        {
+                                            state.AddDown(valsBuffersList3[index], len);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        int len = semiFrontierDown.ReadSegment(s, p, valsBuffersList3[index]);
+                                        lock (state)
+                                        {
+                                            state.AddDown(valsBuffersList3[index], len);
+                                        }
                                     }
                                 }
                             });
@@ -195,6 +223,7 @@ public class PuzzleSolver
                 Task.WaitAll(tasks.ToArray());
             }
 
+            long currentSize = frontier.TotalSize() + newFrontier.TotalSize() + semiFrontierUp.TotalSize() + semiFrontierDown.TotalSize();
             TimerFillFrontier += timer.Elapsed;
 
             frontier.Swap(newFrontier);
@@ -205,7 +234,7 @@ public class PuzzleSolver
             if (count == 0) break;
             results.Add(count);
             countSoFar += count;
-            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed})");
+            Console.WriteLine($"Step: {step}; states: {count:N0} time: {sw.Elapsed} ({(countSoFar * 100.0 / info.RealStates):N5}% in {totalTime.Elapsed}) FilesSize={currentSize:N0}");
         }
         Console.WriteLine($"Steps: {results.Count - 1}, Total: {countSoFar:N0}, eq={countSoFar == info.RealStates}");
         Console.WriteLine($"{string.Join(" ", results)}");

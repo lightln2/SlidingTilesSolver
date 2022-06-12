@@ -19,6 +19,8 @@ public unsafe class MultislideSemifrontierCollector
     private static TimeSpan TimeCollect = TimeSpan.Zero;
     private static TimeSpan TimeFlush = TimeSpan.Zero;
 
+    private byte[] ByteBuffer;
+
     public MultislideSemifrontierCollector(SegmentedFile semifrontier, PuzzleInfo info)
     {
         BUFFER_SIZE = PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE * 2;
@@ -27,6 +29,7 @@ public unsafe class MultislideSemifrontierCollector
         Semifrontier = semifrontier;
         Buffers = info.Arena.AllocUint(BUFFER_SIZE * Segments);
         Counts = new int[Segments];
+        ByteBuffer = new byte[BUFFER_SIZE * 5];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -72,7 +75,16 @@ public unsafe class MultislideSemifrontierCollector
 
     private void Flush(int segment)
     {
-        Semifrontier.WriteSegment(segment, Buffers, segment << BUFFER_SIZE_POW, Counts[segment]);
+        long offset = (long)segment << BUFFER_SIZE_POW;
+        int count = Counts[segment];
+        if (PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING)
+        {
+            int size = PackStates.PackVals(Buffers + offset, count, ByteBuffer);
+            Semifrontier.WriteSegment(segment, ByteBuffer, 0, size);
+        } else
+        {
+            Semifrontier.WriteSegment(segment, Buffers, offset, count);
+        }
         Counts[segment] = 0;
     }
 
