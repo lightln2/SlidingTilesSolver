@@ -34,7 +34,7 @@ public unsafe class GpuSolver
     private static Action<Index1D, PuzzleParams, ArrayView<long>> life_kernel_dn;
     private static MemoryBuffer1D<long, Stride1D.Dense> dev;
 
-    public static int ProcessedValues = 0;
+    public static long ProcessedValues = 0;
     public static TimeSpan GpuExecTime = TimeSpan.Zero;
 
     static GpuSolver()
@@ -292,11 +292,11 @@ public unsafe class GpuSolver
         if (count == 0) return;
         lock (context)
         {
-            ProcessedValues += count;
             var sw = Stopwatch.StartNew();
             dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
             for (int i = 0; i < times; i++)
             {
+                ProcessedValues += count;
                 life_kernel_dn(count, pparams, dev.View);
                 accelerator.Synchronize();
                 dev.AsContiguous().CopyToCPU(ref indexes[0], count);
@@ -312,11 +312,11 @@ public unsafe class GpuSolver
         if (times == 0) return;
         lock (context)
         {
-            ProcessedValues += count;
             var sw = Stopwatch.StartNew();
             dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
             for (int i = 0; i < times; i++)
             {
+                ProcessedValues += count;
                 life_kernel_up(count, pparams, dev.View);
                 accelerator.Synchronize();
                 dev.AsContiguous().CopyToCPU(ref indexes[0], count);
