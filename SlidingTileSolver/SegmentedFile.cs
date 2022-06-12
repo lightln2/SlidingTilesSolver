@@ -145,6 +145,19 @@ public unsafe class SegmentedFile : IDisposable
         return segmentPart.Length;
     }
 
+    public long TotalSize()
+    {
+        long size = 0;
+        foreach(var s in Segments)
+        {
+            foreach (var p in s.Parts)
+            {
+                size += p.Length;
+            }
+        }
+        return size;
+    }
+
     public static void PrintStats()
     {
         Console.WriteLine($"SegmentedFileUint: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");

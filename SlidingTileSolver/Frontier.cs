@@ -59,6 +59,8 @@ public class Frontier : IDisposable
         return count;
     }
 
+    public long TotalSize() => File.TotalSize();
+
     public void Dispose()
     {
         File.Dispose();

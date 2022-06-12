@@ -59,6 +59,8 @@ public class MultislideFrontier : IDisposable
         File.Dispose();
     }
 
+    public long TotalSize() => File.TotalSize();
+
     public static void PrintStats()
     {
         Console.WriteLine($"Frontier: write={TimeWrite}, read={TimeRead}");
