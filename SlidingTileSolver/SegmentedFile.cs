@@ -160,7 +160,7 @@ public unsafe class SegmentedFile : IDisposable
 
     public static void PrintStats()
     {
-        Console.WriteLine($"SegmentedFileUint: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
+        Console.WriteLine($"SegmentedFile: WriteTime={WriteTime}, Bytes={BytesWritten:N0}, ReadTime={ReadTime}, Bytes={BytesRead:N0}");
     }
 
     public void Dispose()
