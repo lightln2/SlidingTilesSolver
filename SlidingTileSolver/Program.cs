@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 
 class Program
 {
     static void Main(string[] args)
     {
+        Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+
         /*
-        PuzzleInfo.SetSemifrontierBufferPow(17);
-        PuzzleInfo.THREADS = 3;
         var info = new PuzzleInfo(8, 2, 0);
-        info.MaxSteps = 8;
-        MultislideSolver.Solve(info);
-        */
-
-        PuzzleInfo.SEMIFRONTIER_DIFF_ENCODING = false;
-        PuzzleInfo.THREADS = 6;
-        var info = new PuzzleInfo(7, 2, 0, true);
-        MultislideSolver.Solve(info);
-
-        /*
-        PuzzleInfo.THREADS = 3;
-        var info = new PuzzleInfo(7, 2, 0);
         PuzzleSolver.Solve(info);
         */
+
+        PuzzleInfo.THREADS = 6;
+        var info = new PuzzleInfo(4, 4, 0, true);
+        MultislideSolver.Solve(info);
+
     }
 }
