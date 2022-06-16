@@ -45,6 +45,7 @@ public class MultislideSolver
         using var newFrontierLtRt = new MultislideFrontier(info, "c:/PUZ/frontier.new.lt.rt", "d:/PUZ/frontier.new.lt.rt");
         using var semiFrontier = new SegmentedFile(info.SegmentsCount, "c:/PUZ/semifrontier", "d:/PUZ/semifrontier");
 
+
         var valsBuffersList = new List<uint[]>();
         var valsBuffersList2 = new List<uint[]>();
 
@@ -242,7 +243,7 @@ public class MultislideSolver
         GpuSolver.PrintStats();
         if (info.Height == 2) MultislideUpDownCollector2.PrintStats();
         else MultislideUpDownCollector.PrintStats();
-        SemifrontierCollector.PrintStats();
+        MultislideSemifrontierCollector.PrintStats();
         SegmentedFile.PrintStats();
         Console.WriteLine();
         MultislideFrontier.PrintStats();
