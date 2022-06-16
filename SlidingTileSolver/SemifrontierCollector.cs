@@ -46,7 +46,7 @@ public unsafe class SemifrontierCollector
     {
         int* ival = (int*)value;
         int segment = ival[1];
-        if (segment < 0) throw new Exception("A");
+        if (segment < 0) throw new Exception("Segment < 0");
         long offset = (long)segment << PuzzleInfo.SEMIFRONTIER_BUFFER_POW;
         Buffers[offset + (Counts[segment]++)] = (uint)ival[0];
         if (Counts[segment] >= PuzzleInfo.SEMIFRONTIER_BUFFER_SIZE)
