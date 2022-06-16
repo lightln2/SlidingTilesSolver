@@ -11,9 +11,9 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
     private readonly PuzzleInfo Info;
     public readonly MultislideSemifrontierCollector SemifrontierCollector;
     private int BufferLength;
-    private long*[] UpBuffers;
-    private long*[] DnBuffers;
+    private long*[] RowBuffers;
     private int[] Counts;
+    private int MaxCount;
 
     private int[] RowMap;
 
@@ -25,14 +25,13 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
     {
         Info = info;
         SemifrontierCollector = semifrontierCollector;
-        UpBuffers = new long*[info.Height];
-        DnBuffers = new long*[info.Height];
+        RowBuffers = new long*[info.Height];
         Counts = new int[info.Height];
-        BufferLength = GpuSolver.GPUSIZE / info.Height;
+        BufferLength = 2 * GpuSolver.GPUSIZE / info.Height;
+        MaxCount = BufferLength / (info.Height - 1);
         for (int i = 0; i < info.Height; i++)
         {
-            UpBuffers[i] = info.Arena.Alloclong(BufferLength);
-            DnBuffers[i] = info.Arena.Alloclong(BufferLength);
+            RowBuffers[i] = info.Arena.Alloclong(BufferLength);
         }
 
         RowMap = new int[16];
@@ -52,10 +51,9 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
         {
             long val = baseIndex | vals[i];
             int row = RowMap[vals[i] & 15];
-            UpBuffers[row][Counts[row]] = val;
-            DnBuffers[row][Counts[row]] = val;
+            RowBuffers[row][Counts[row]] = val;
             Counts[row]++;
-            if (Counts[row] == BufferLength)
+            if (Counts[row] >= MaxCount)
             {
                 Flush(row);
             }
@@ -65,13 +63,11 @@ public unsafe class MultislideUpDownCollector : IMultislideUpDownCollector
 
     private void Flush(int row)
     {
-        if (Counts[row] == 0) return;
-        GpuSolver.CalcGPU_MultislideUp(Counts[row], UpBuffers[row], row, () => {
-            SemifrontierCollector.Collect(UpBuffers[row], Counts[row]);
-        });
-        GpuSolver.CalcGPU_MultislideDown(Counts[row], DnBuffers[row], Info.Height - row - 1, () => {
-            SemifrontierCollector.Collect(DnBuffers[row], Counts[row]);
-        });
+        int count = Counts[row];
+        if (count == 0) return;
+        GpuSolver.CalcGPU_Multimove(count, RowBuffers[row], row);
+        SemifrontierCollector.Collect(RowBuffers[row], count * (Info.Height - 1));
+
         Counts[row] = 0;
     }
 
