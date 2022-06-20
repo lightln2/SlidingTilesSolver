@@ -1,0 +1,44 @@
+C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>SlidingTileSolver.exe
+States: 6 x 240 = 1 440 (multislide), s/f: 2 097 152; up/dn: 4 608 000 000 Needed: 4 610 097 152 bytes
+GeForce GTX 1050 Ti [Type: Cuda, WarpSize: 32, MaxNumThreadsPerGroup: 1024, MemorySize: 4294967296]
+** Multislide **
+Puzzle 6=3x2, states: 360, total: 960. Segments: 1
+Step: 0; states: 1
+Step: 1; states: 3 time: 00:00:00.0213309 (1,11111% in 00:00:00.8781448) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 2; states: 4 time: 00:00:00.0039026 (2,22222% in 00:00:00.8823663) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 3; states: 6 time: 00:00:00.0059289 (3,88889% in 00:00:00.8883966) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 4; states: 8 time: 00:00:00.0041359 (6,11111% in 00:00:00.8926266) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 5; states: 12 time: 00:00:00.0038479 (9,44444% in 00:00:00.8965657) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 6; states: 15 time: 00:00:00.0038242 (13,61111% in 00:00:00.9005014) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 7; states: 18 time: 00:00:00.0036030 (18,61111% in 00:00:00.9042021) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 8; states: 22 time: 00:00:00.0039807 (24,72222% in 00:00:00.9082708) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 9; states: 30 time: 00:00:00.0039517 (33,05556% in 00:00:00.9123455) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 10; states: 36 time: 00:00:00.0038314 (43,05556% in 00:00:00.9162589) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 11; states: 45 time: 00:00:00.0036697 (55,55556% in 00:00:00.9200238) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 12; states: 42 time: 00:00:00.0040717 (67,22222% in 00:00:00.9241547) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 13; states: 30 time: 00:00:00.0039087 (75,55556% in 00:00:00.9281617) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 14; states: 28 time: 00:00:00.0037293 (83,33333% in 00:00:00.9320090) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 15; states: 24 time: 00:00:00.0035968 (90,00000% in 00:00:00.9356953) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 16; states: 18 time: 00:00:00.0035429 (95,00000% in 00:00:00.9393193) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 17; states: 9 time: 00:00:00.0043541 (97,50000% in 00:00:00.9438775) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 18; states: 5 time: 00:00:00.0039407 (98,88889% in 00:00:00.9478949) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 19; states: 3 time: 00:00:00.0038235 (99,72222% in 00:00:00.9518401) FilesGB=0,0 (0,0, 0,0, 0,0)
+Step: 20; states: 1 time: 00:00:00.0036674 (100,00000% in 00:00:00.9556011) FilesGB=0,0 (0,0, 0,0, 0,0)
+Steps: 20, Total: 360, eq=True
+1 3 4 6 8 12 15 18 22 30 36 45 42 30 28 24 18 9 5 3 1
+Total time: 00:00:00.9614327
+
+1) Timer.FillSemifrontier=00:00:00.0415454
+2) Timer.FillFrontier=00:00:00.0082333
+
+GPUSolver: Items=180, time=00:00:00.0141967
+MultislideUpDownCollector2: collect=00:00:00.0000241 close=00:00:00.0178162
+SemifrontierCollector: collect=00:00:00.0000053; close=00:00:00.0001620
+SegmentedFile: WriteTime=00:00:00.0001246, Bytes=2 312, ReadTime=00:00:00.0039066, Bytes=2 312
+
+Frontier: write=00:00:00.0028421, read=00:00:00.0037576
+FrontierStates: collect=00:00:00.0001371
+PackStates: pack=00:00:00.0015448 unpack=00:00:00.0008050
+PackInts: pack=00:00:00.0000151 unpack=00:00:00.0000120
+
+C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>
