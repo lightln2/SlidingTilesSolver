@@ -83,7 +83,7 @@ public unsafe class GpuSolver
 
         long value = input[index];
         FromIndex(ref p, value, arr1);
-        UnpackForMultimove(ref p, arr1);
+        Unpack(ref p, arr1);
         Copy(arr1, arr2);
 
         Index1D pos = index;
@@ -214,34 +214,6 @@ public unsafe class GpuSolver
             }
         }
 
-        // restore by inversion count (only if rotating up/down would affect it)
-        byte zeroPos = arr[OFFSET_ZERO];
-        bool rowEven = ((zeroPos / p.Width) & 1) == 0;
-        if (zeroPos >= p.Size - 2 || (zeroPos >= p.Size - p.Width - 2 && zeroPos < p.Size - p.Width))
-        {
-            bool swapLast = (p.WidthIsEven == 1 && invEven == rowEven) || (!(p.WidthIsEven == 1) && invEven);
-            if (swapLast)
-            {
-                byte tmp = arr[p.Size - 2];
-                arr[p.Size - 2] = arr[p.Size - 3];
-                arr[p.Size - 3] = tmp;
-            }
-        }
-    }
-
-    private static void UnpackForMultimove(ref PuzzleParams p, byte[] arr)
-    {
-        bool invEven = true;
-
-        for (int i = p.Size - 2; i >= 0; i--)
-        {
-            for (int j = i + 1; j < p.Size - 1; j++)
-            {
-                if (arr[j] >= arr[i]) arr[j]++;
-                else invEven = !invEven;
-            }
-        }
-
         // restore by inversion count
         byte zeroPos = arr[OFFSET_ZERO];
         bool rowEven = ((zeroPos / p.Width) & 1) == 0;
@@ -257,20 +229,15 @@ public unsafe class GpuSolver
 
     private static void Pack(ref PuzzleParams p, byte[] arr)
     {
-        byte[] dst = new byte[16];
-        Copy(arr, dst);
         for (int i = 0; i < p.Size - 4; i++)
         {
             for (int j = i + 1; j < p.Size - 3; j++)
             {
-                if (arr[j] > arr[i]) dst[j]--;
+                if (arr[j] >= arr[i]) arr[j]--;
             }
         }
-        // will be restored by inversions count
-        dst[p.Size - 2] = 0;
-        dst[p.Size - 3] = 0;
-
-        Copy(dst, arr);
+        arr[p.Size - 2] = 0;
+        arr[p.Size - 3] = 0;
     }
 
     private static bool CanRotateUp(ref PuzzleParams p, byte[] arr)
