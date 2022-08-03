@@ -1,4 +1,4 @@
-# Complete breadth-first search of the Sliding Tile Puzzles
+# Complete Breadth-First Search of the Sliding Tile Puzzles
 
 The 4 x 4 and 8 x 2 [Fifteen Sliding Tile Puzzles](https://en.wikipedia.org/wiki/15_puzzle) have over ten trillion states that can be reached from initial position.
 This program performs complete breadth-first search on them in single-tile and multi-tile move metric, and finds puzzle radius and width at all depths.
@@ -8,9 +8,15 @@ Minimum requirements:
 - 16GB RAM
 Running time is a few days, depending on the hardware available.
 
+To achieve best possible performance, the program uses
+- special asymmetric encoding of puzzle states
+- [Frontier Search](https://www.researchgate.net/publication/220430520_Linear-Time_Disk-Based_Implicit_Graph_Search) algorithm
+- [ILGPU library](https://www.ilgpu.net/) for GPU calculations
+- aggressive optimizations ([VByte encoding](https://arxiv.org/abs/1709.08990), SSE intrinsics, bit tricks etc.)
+
 # Results:
 
-** Single-tile metric **
+**Single-tile metric**
 [OEIS A151944](http://oeis.org/A151944) sequence
 
 | Cells | Puzzle | Radius |
@@ -28,7 +34,7 @@ Running time is a few days, depending on the hardware available.
 | 16    | 8 x 2  | 140    |
 
 
-** Multi-tile metric **
+**Multi-tile metric**
 
 | Cells | Puzzle | Radius |
 |:-----:|:------:|:------:|
