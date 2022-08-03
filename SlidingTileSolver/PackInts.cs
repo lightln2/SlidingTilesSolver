@@ -53,6 +53,7 @@ public unsafe class PackInts
 
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static int BytesCntMinusOne(uint val)
     {
         if (val == 0) return 0;

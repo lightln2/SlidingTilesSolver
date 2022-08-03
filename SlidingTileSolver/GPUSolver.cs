@@ -339,45 +339,6 @@ public unsafe class GpuSolver
         }
     }
 
-    public static void CalcGPU_MultislideDown(int count, long* indexes, int times, Action onStep)
-    {
-        if (count == 0) return;
-        lock (context)
-        {
-            var sw = Stopwatch.StartNew();
-            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
-            for (int i = 0; i < times; i++)
-            {
-                ProcessedValues += count;
-                life_kernel_dn(count, pparams, dev.View);
-                accelerator.Synchronize();
-                dev.AsContiguous().CopyToCPU(ref indexes[0], count);
-                onStep();
-            }
-            GpuExecTime += sw.Elapsed;
-        }
-    }
-
-    public static void CalcGPU_MultislideUp(int count, long* indexes, int times, Action onStep)
-    {
-        if (count == 0) return;
-        if (times == 0) return;
-        lock (context)
-        {
-            var sw = Stopwatch.StartNew();
-            dev.AsContiguous().CopyFromCPU(ref indexes[0], count);
-            for (int i = 0; i < times; i++)
-            {
-                ProcessedValues += count;
-                life_kernel_up(count, pparams, dev.View);
-                accelerator.Synchronize();
-                dev.AsContiguous().CopyToCPU(ref indexes[0], count);
-                onStep();
-            }
-            GpuExecTime += sw.Elapsed;
-        }
-    }
-
     public static void CalcGPU_Multimove(int count, long* indexes, int row)
     {
         if (count == 0) return;
