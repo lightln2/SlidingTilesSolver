@@ -2,26 +2,27 @@ States: 4 x 24 = 96, s/f: 2,097,152; up/dn: 3,072,000,000 Needed: 3,074,097,152 
 GeForce GTX 1050 Ti [Type: Cuda, WarpSize: 32, MaxNumThreadsPerGroup: 1024, MemorySize: 4294967296]
 Puzzle 4=2x2, states: 12, total: 48. Segments: 1
 Step: 0; states: 1
-Step: 1; states: 2 time: 00:00:00.0208403 (25.00000% in 00:00:01.6059877) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 2; states: 2 time: 00:00:00.0029793 (41.66667% in 00:00:01.6096114) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 3; states: 2 time: 00:00:00.0052307 (58.33333% in 00:00:01.6149964) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 4; states: 2 time: 00:00:00.0042833 (75.00000% in 00:00:01.6194108) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 5; states: 2 time: 00:00:00.0029953 (91.66667% in 00:00:01.6225379) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 6; states: 1 time: 00:00:00.0032103 (100.00000% in 00:00:01.6258786) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 1; states: 2 time: 00:00:00.0195257 (25.00000% in 00:00:01.0046606) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 2; states: 2 time: 00:00:00.0034451 (41.66667% in 00:00:01.0088145) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 3; states: 2 time: 00:00:00.0051413 (58.33333% in 00:00:01.0140919) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 4; states: 2 time: 00:00:00.0030384 (75.00000% in 00:00:01.0172626) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 5; states: 2 time: 00:00:00.0028419 (91.66667% in 00:00:01.0202300) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 6; states: 1 time: 00:00:00.0027591 (100.00000% in 00:00:01.0231097) FilesGB=0.0 (0.0, 0.0, 0.0)
 Steps: 6, Total: 12, eq=True
 1 2 2 2 2 2 1
-Total time: 00:00:01.6300281
+Total time: 00:00:01.0274244
 
-1) Timer.FillSemifrontier=00:00:00.0170467
-2) Timer.FillFrontier=00:00:00.0059810
+1) Timer.FillSemifrontier=00:00:00.0155465
+2) Timer.FillFrontier=00:00:00.0054186
 
-GPUSolver: Items=6, time=00:00:00.0109859
-UpDownCollector: collect=00:00:00.0000177 close=00:00:00.0182584
-SemifrontierCollector: collect=00:00:00.0001029; close=00:00:00.0005507
-SegmentedFile: WriteTime=00:00:00.0000672, Bytes=441, ReadTime=00:00:00.0016204, Bytes=696
+GPUSolver: Items=6, time=00:00:00.0097831
+UpDownCollector: collect=00:00:00.0000101 close=00:00:00.0167599
+SemifrontierCollector: collect=00:00:00.0000848; close=00:00:00.0005372
+SegmentedFile: WriteTime=00:00:00.0000618, Bytes=441, ReadTime=00:00:00.0014449, Bytes=696
 
-Frontier: write=00:00:00.0092953, read=00:00:00.0031755
-FrontierStates: collect=00:00:00.0001129
-PackStates: pack=00:00:00.0079188 unpack=00:00:00.0012919
-PackInts: pack=00:00:00.0000031 unpack=00:00:00.0000042
-PackBytes: pack=00:00:00.0000032 unpack=00:00:00.0000025
+Frontier: write=00:00:00.0042884, read=00:00:00.0031346
+FrontierStates: collect=00:00:00.0001132
+PackStates: pack=00:00:00.0028731 unpack=00:00:00.0012866
+PackInts: pack=00:00:00.0000025 unpack=00:00:00.0000042
+PackBytes: pack=00:00:00.0000027 unpack=00:00:00.0000023
+

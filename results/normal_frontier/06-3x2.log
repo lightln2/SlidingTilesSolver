@@ -2,41 +2,41 @@ States: 4 x 480 = 1,920, s/f: 2,097,152; up/dn: 3,072,000,000 Needed: 3,074,097,
 GeForce GTX 1050 Ti [Type: Cuda, WarpSize: 32, MaxNumThreadsPerGroup: 1024, MemorySize: 4294967296]
 Puzzle 6=3x2, states: 360, total: 960. Segments: 1
 Step: 0; states: 1
-Step: 1; states: 2 time: 00:00:00.0197927 (0.83333% in 00:00:00.9017960) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 2; states: 3 time: 00:00:00.0028947 (1.66667% in 00:00:00.9050511) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 3; states: 5 time: 00:00:00.0050968 (3.05556% in 00:00:00.9102621) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 4; states: 6 time: 00:00:00.0030283 (4.72222% in 00:00:00.9140543) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 5; states: 7 time: 00:00:00.0031895 (6.66667% in 00:00:00.9173707) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 6; states: 10 time: 00:00:00.0030675 (9.44444% in 00:00:00.9205576) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 7; states: 12 time: 00:00:00.0031373 (12.77778% in 00:00:00.9238275) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 8; states: 12 time: 00:00:00.0045355 (16.11111% in 00:00:00.9284862) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 9; states: 16 time: 00:00:00.0030150 (20.55556% in 00:00:00.9316273) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 10; states: 23 time: 00:00:00.0028733 (26.94444% in 00:00:00.9346237) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 11; states: 25 time: 00:00:00.0029904 (33.88889% in 00:00:00.9377319) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 12; states: 28 time: 00:00:00.0029660 (41.66667% in 00:00:00.9408139) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 13; states: 39 time: 00:00:00.0044133 (52.50000% in 00:00:00.9453459) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 14; states: 44 time: 00:00:00.0030832 (64.72222% in 00:00:00.9485580) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 15; states: 40 time: 00:00:00.0028986 (75.83333% in 00:00:00.9515769) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 16; states: 29 time: 00:00:00.0029052 (83.88889% in 00:00:00.9546014) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 17; states: 21 time: 00:00:00.0027760 (89.72222% in 00:00:00.9574703) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 18; states: 18 time: 00:00:00.0044612 (94.72222% in 00:00:00.9620205) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 19; states: 12 time: 00:00:00.0032961 (98.05556% in 00:00:00.9654283) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 20; states: 6 time: 00:00:00.0027994 (99.72222% in 00:00:00.9683317) FilesGB=0.0 (0.0, 0.0, 0.0)
-Step: 21; states: 1 time: 00:00:00.0025074 (100.00000% in 00:00:00.9709249) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 1; states: 2 time: 00:00:00.0197807 (0.83333% in 00:00:00.8323519) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 2; states: 3 time: 00:00:00.0032873 (1.66667% in 00:00:00.8360503) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 3; states: 5 time: 00:00:00.0051339 (3.05556% in 00:00:00.8413086) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 4; states: 6 time: 00:00:00.0029750 (4.72222% in 00:00:00.8444100) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 5; states: 7 time: 00:00:00.0032424 (6.66667% in 00:00:00.8477681) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 6; states: 10 time: 00:00:00.0031658 (9.44444% in 00:00:00.8514246) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 7; states: 12 time: 00:00:00.0033299 (12.77778% in 00:00:00.8548945) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 8; states: 12 time: 00:00:00.0036056 (16.11111% in 00:00:00.8586257) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 9; states: 16 time: 00:00:00.0033396 (20.55556% in 00:00:00.8620712) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 10; states: 23 time: 00:00:00.0040806 (26.94444% in 00:00:00.8662449) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 11; states: 25 time: 00:00:00.0034083 (33.88889% in 00:00:00.8697529) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 12; states: 28 time: 00:00:00.0031140 (41.66667% in 00:00:00.8729600) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 13; states: 39 time: 00:00:00.0036667 (52.50000% in 00:00:00.8767437) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 14; states: 44 time: 00:00:00.0042364 (64.72222% in 00:00:00.8810824) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 15; states: 40 time: 00:00:00.0033525 (75.83333% in 00:00:00.8845606) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 16; states: 29 time: 00:00:00.0034144 (83.88889% in 00:00:00.8880962) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 17; states: 21 time: 00:00:00.0037309 (89.72222% in 00:00:00.8919456) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 18; states: 18 time: 00:00:00.0035484 (94.72222% in 00:00:00.8956273) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 19; states: 12 time: 00:00:00.0034705 (98.05556% in 00:00:00.8995332) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 20; states: 6 time: 00:00:00.0032094 (99.72222% in 00:00:00.9028657) FilesGB=0.0 (0.0, 0.0, 0.0)
+Step: 21; states: 1 time: 00:00:00.0030545 (100.00000% in 00:00:00.9060133) FilesGB=0.0 (0.0, 0.0, 0.0)
 Steps: 21, Total: 360, eq=True
 1 2 3 5 6 7 10 12 12 16 23 25 28 39 44 40 29 21 18 12 6 1
-Total time: 00:00:00.9753919
+Total time: 00:00:00.9103670
 
-1) Timer.FillSemifrontier=00:00:00.0243087
-2) Timer.FillFrontier=00:00:00.0087532
+1) Timer.FillSemifrontier=00:00:00.0257898
+2) Timer.FillFrontier=00:00:00.0072578
 
-GPUSolver: Items=180, time=00:00:00.0164331
-UpDownCollector: collect=00:00:00.0000251 close=00:00:00.0236884
-SemifrontierCollector: collect=00:00:00.0000914; close=00:00:00.0005795
-SegmentedFile: WriteTime=00:00:00.0001115, Bytes=2,674, ReadTime=00:00:00.0046794, Bytes=3,883
+GPUSolver: Items=180, time=00:00:00.0174535
+UpDownCollector: collect=00:00:00.0000360 close=00:00:00.0248268
+SemifrontierCollector: collect=00:00:00.0002081; close=00:00:00.0005759
+SegmentedFile: WriteTime=00:00:00.0001086, Bytes=2,674, ReadTime=00:00:00.0045098, Bytes=3,808
 
-Frontier: write=00:00:00.0037876, read=00:00:00.0045025
-FrontierStates: collect=00:00:00.0001625
-PackStates: pack=00:00:00.0022424 unpack=00:00:00.0013467
-PackInts: pack=00:00:00.0000109 unpack=00:00:00.0000182
-PackBytes: pack=00:00:00.0000047 unpack=00:00:00.0000065
+Frontier: write=00:00:00.0035219, read=00:00:00.0048119
+FrontierStates: collect=00:00:00.0001514
+PackStates: pack=00:00:00.0020184 unpack=00:00:00.0015245
+PackInts: pack=00:00:00.0000108 unpack=00:00:00.0000178
+PackBytes: pack=00:00:00.0000043 unpack=00:00:00.0000055
