@@ -17,7 +17,7 @@ Running time is a few days, depending on the hardware available.
 
 # Results:
 
-**Single-tile metric**
+**Single-tile moves**
 
 ([OEIS A151944](http://oeis.org/A151944) sequence)
 
@@ -36,7 +36,7 @@ Running time is a few days, depending on the hardware available.
 | 16    | 8 x 2  | 140    |
 
 
-**Multi-tile metric**
+**Multi-tile moves**
 
 | Cells | Puzzle | Radius |
 |:-----:|:------:|:------:|
