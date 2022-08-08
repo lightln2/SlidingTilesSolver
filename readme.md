@@ -3,7 +3,7 @@
 The 4 x 4 and 8 x 2 [Fifteen Sliding Tile Puzzles](https://en.wikipedia.org/wiki/15_puzzle) have over ten trillion states that can be reached from initial position.
 This program performs complete breadth-first search on them in single-tile and multi-tile move metric, and finds puzzle radius and width at all depths.
 
-To achieve best possible performance, the program uses
+The algorithm is described in detail [here](https://www.researchgate.net/publication/362559309_Complete_Solution_of_the_Fifteen_Sliding_Tile_Puzzles_on_a_Personal_Computer). To achieve best possible performance, the program uses
 - special asymmetric encoding of puzzle states
 - [Frontier Search](https://www.researchgate.net/publication/220430520_Linear-Time_Disk-Based_Implicit_Graph_Search) algorithm
 - [ILGPU library](https://www.ilgpu.net/) for GPU calculations
