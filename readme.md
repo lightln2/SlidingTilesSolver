@@ -13,6 +13,7 @@ Minimum requirements:
 - NVidia GPU card
 - 8TB free disk space
 - 16GB RAM
+
 Running time is a few days, depending on the hardware available.
 
 # Results:
