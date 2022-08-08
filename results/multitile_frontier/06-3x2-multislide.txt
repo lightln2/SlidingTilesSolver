@@ -1,4 +1,3 @@
-C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>SlidingTileSolver.exe
 States: 6 x 240 = 1 440 (multislide), s/f: 2 097 152; up/dn: 4 608 000 000 Needed: 4 610 097 152 bytes
 GeForce GTX 1050 Ti [Type: Cuda, WarpSize: 32, MaxNumThreadsPerGroup: 1024, MemorySize: 4294967296]
 ** Multislide **
@@ -40,5 +39,3 @@ Frontier: write=00:00:00.0028421, read=00:00:00.0037576
 FrontierStates: collect=00:00:00.0001371
 PackStates: pack=00:00:00.0015448 unpack=00:00:00.0008050
 PackInts: pack=00:00:00.0000151 unpack=00:00:00.0000120
-
-C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>

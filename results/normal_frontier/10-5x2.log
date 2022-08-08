@@ -74,6 +74,3 @@ FrontierStates: collect=00:00:00.0369000
 PackStates: pack=00:00:00.0060888 unpack=00:00:00.0090333
 PackInts: pack=00:00:00.0038215 unpack=00:00:00.0069291
 PackBytes: pack=00:00:00.0002176 unpack=00:00:00.0008145
-
-C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0\SlidingTileSolver.exe (process 5468) exited with code 0.
-Press any key to close this window . . .

@@ -1,5 +1,3 @@
-
-C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>SlidingTileSolver.exe
 States: 4 x 2,147,483,648 = 8,589,934,592, s/f: 25,165,824; up/dn: 3,072,000,000 Needed: 8,589,934,592 bytes
 GeForce GTX 1050 Ti [Type: Cuda, WarpSize: 32, MaxNumThreadsPerGroup: 1024, MemorySize: 4294967296]
 Puzzle 14=7x2, states: 43,589,145,600, total: 49,816,166,400. Segments: 12
@@ -129,5 +127,3 @@ FrontierStates: collect=00:19:51.6646094
 PackStates: pack=00:01:24.3499348 unpack=00:02:32.9484191
 PackInts: pack=00:01:19.1891661 unpack=00:02:23.2731541
 PackBytes: pack=00:00:13.0200100 unpack=00:00:35.5661340
-
-C:\PUZ\SlidingTilesSolver\SlidingTileSolver\bin\Release\net5.0>
